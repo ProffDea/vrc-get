@@ -15,9 +15,4 @@ readme.workspace = true
 [dependencies.object]
 version = "0.35.0"
 default-features = false
-features = [
-    "read_core",
-    "macho",
-    "pe",
-    "elf",
-]
+features = ["read_core", "macho", "pe", "elf"]

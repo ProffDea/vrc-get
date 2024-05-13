@@ -12,17 +12,17 @@ keywords = ["vpm", "package-manager", "vrc-get"]
 categories = ["database"]
 
 include = [
-    "/src/**/*",
-    "/dotnet/vrc-get-litedb.csproj",
-    "/dotnet/Directory.Build.props",
-    "/dotnet/src/**/*",
-    "/dotnet/LiteDB/LiteDB/**/*",
-    "!/dotnet/LiteDB/LiteDB/bin/**/*",
-    "!/dotnet/LiteDB/LiteDB/obj/**/*",
-    "/Cargo.toml",
-    "/*.rs",
-    "README.md",
-    "LICENSE",
+  "/src/**/*",
+  "/dotnet/vrc-get-litedb.csproj",
+  "/dotnet/Directory.Build.props",
+  "/dotnet/src/**/*",
+  "/dotnet/LiteDB/LiteDB/**/*",
+  "!/dotnet/LiteDB/LiteDB/bin/**/*",
+  "!/dotnet/LiteDB/LiteDB/obj/**/*",
+  "/Cargo.toml",
+  "/*.rs",
+  "README.md",
+  "LICENSE",
 ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
