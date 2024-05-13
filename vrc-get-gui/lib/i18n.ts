@@ -8,35 +8,27 @@ import frJson from "@/locales/fr.json5";
 import { tc as tcOriginal } from "@/components/VGTrans";
 
 const languageResources = {
-  en: enJson,
-  de: deJson,
-  ja: jaJson,
-  fr: frJson,
-  zh_cn: zh_cnJson,
-}
+	en: enJson,
+	de: deJson,
+	ja: jaJson,
+	fr: frJson,
+	zh_cn: zh_cnJson,
+};
 
-i18next
-  .use(initReactI18next)
-  .init({
-    resources: languageResources,
-    lng: "en",
-    fallbackLng: "en",
-    nsSeparator: '::',
+i18next.use(initReactI18next).init({
+	resources: languageResources,
+	lng: "en",
+	fallbackLng: "en",
+	nsSeparator: "::",
 
-    interpolation: {
-      // react is xzz safe (in general)
-      escapeValue: false,
-    },
-    react: {
-      transKeepBasicHtmlNodesFor: [
-        'br',
-        'strong',
-        'b',
-        'i',
-        'code',
-      ]
-    }
-  })
+	interpolation: {
+		// react is xzz safe (in general)
+		escapeValue: false,
+	},
+	react: {
+		transKeepBasicHtmlNodesFor: ["br", "strong", "b", "i", "code"],
+	},
+});
 
 export default i18next;
 export const languages = Object.keys(languageResources);
