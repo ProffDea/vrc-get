@@ -24,7 +24,7 @@ async function shouldRebuild() {
     const oldPackageLockHash = oldHashes.packageLockHash;
     const oldCargoLockHash = oldHashes.cargoLockHash;
 
-    const packageLock = await readFile("package-lock.json", "utf8");
+    const packageLock = await readFile("pnpm-lock.yaml", "utf8");
     const packageLockHash = createHash("sha256").update(packageLock).digest("hex");
     const cargoLock = await readFile("../Cargo.lock", "utf8");
     const cargoLockHash = createHash("sha256").update(cargoLock).digest("hex");
