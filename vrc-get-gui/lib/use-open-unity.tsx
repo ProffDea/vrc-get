@@ -1,4 +1,4 @@
-import { projectOpenUnity, TauriUnityVersions } from "@/lib/bindings";
+import { type TauriUnityVersions, projectOpenUnity } from "@/lib/bindings";
 import i18next from "@/lib/i18n";
 import { toastError, toastNormal } from "@/lib/toast";
 import { useUnitySelectorDialog } from "@/lib/use-unity-selector-dialog";

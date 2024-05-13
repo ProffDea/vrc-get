@@ -1,5 +1,25 @@
 "use client";
 
+import { InputNoLabel } from "@/components/InputNoLabel";
+import { HNavBar, VStack } from "@/components/layout";
+import {
+	type TauriRemoteRepositoryInfo,
+	type TauriUserRepository,
+	environmentAddRepository,
+	environmentDownloadRepository,
+	environmentHideRepository,
+	environmentRemoveRepository,
+	environmentRepositoriesInfo,
+	environmentShowRepository,
+} from "@/lib/bindings";
+import { tc, tt } from "@/lib/i18n";
+import { nop } from "@/lib/nop";
+import { toastError, toastSuccess, toastThrownError } from "@/lib/toast";
+import {
+	MinusCircleIcon,
+	PlusCircleIcon,
+	XCircleIcon,
+} from "@heroicons/react/24/outline";
 import {
 	Button,
 	Card,
@@ -10,36 +30,14 @@ import {
 	DialogHeader,
 	IconButton,
 	Input,
-	List,
-	ListItem,
 	Tooltip,
 	Typography,
 } from "@material-tailwind/react";
 import { useQuery } from "@tanstack/react-query";
-import {
-	environmentAddRepository,
-	environmentDownloadRepository,
-	environmentHideRepository,
-	environmentRemoveRepository,
-	environmentRepositoriesInfo,
-	environmentShowRepository,
-	TauriRemoteRepositoryInfo,
-	TauriUserRepository,
-} from "@/lib/bindings";
-import { HNavBar, VStack } from "@/components/layout";
 import React, { Suspense, useMemo, useState } from "react";
-import {
-	MinusCircleIcon,
-	PlusCircleIcon,
-	XCircleIcon,
-} from "@heroicons/react/24/outline";
-import { nop } from "@/lib/nop";
-import { toastError, toastSuccess, toastThrownError } from "@/lib/toast";
-import { tc, tt } from "@/lib/i18n";
-import { InputNoLabel } from "@/components/InputNoLabel";
-import { loadManifestWithRetries } from "next/dist/server/load-components";
 
-export default function Page(props: {}) {
+// biome-ignore lint/suspicious/noExplicitAny: unknown
+export default function Page(props: any) {
 	return (
 		<Suspense>
 			<PageBody {...props} />
@@ -107,8 +105,9 @@ function PageBody() {
 					return;
 				case "Success":
 					break;
-				default:
+				default: {
 					const _exhaustiveCheck: never = info;
+				}
 			}
 			setState({ type: "confirming", repo: info.value, url, headers });
 		} catch (e) {
@@ -126,6 +125,7 @@ function PageBody() {
 		}
 	}
 
+	// TODO: Specify type
 	let dialogBody;
 	switch (state.type) {
 		case "normal":
@@ -146,29 +146,32 @@ function PageBody() {
 			dialogBody = <Duplicated cancel={cancel} />;
 			break;
 		case "confirming":
-			const doAddRepository = async () => {
-				try {
-					await environmentAddRepository(state.url, state.headers);
-					setState({ type: "normal" });
-					toastSuccess(tt("vpm repositories:toast:repository added"));
-					// noinspection ES6MissingAwait
-					result.refetch();
-				} catch (e) {
-					toastThrownError(e);
-					setState({ type: "normal" });
-				}
-			};
-			dialogBody = (
-				<Confirming
-					repo={state.repo}
-					headers={state.headers}
-					cancel={cancel}
-					add={doAddRepository}
-				/>
-			);
+			{
+				const doAddRepository = async () => {
+					try {
+						await environmentAddRepository(state.url, state.headers);
+						setState({ type: "normal" });
+						toastSuccess(tt("vpm repositories:toast:repository added"));
+						// noinspection ES6MissingAwait
+						result.refetch();
+					} catch (e) {
+						toastThrownError(e);
+						setState({ type: "normal" });
+					}
+				};
+				dialogBody = (
+					<Confirming
+						repo={state.repo}
+						headers={state.headers}
+						cancel={cancel}
+						add={doAddRepository}
+					/>
+				);
+			}
 			break;
-		default:
+		default: {
 			const _exhaustiveCheck: never = state;
+		}
 	}
 	const dialog = dialogBody ? (
 		<Dialog handler={nop} open>
@@ -228,8 +231,11 @@ function RepositoryTable({
 				<tr>
 					{TABLE_HEAD.map((head, index) => (
 						<th
+							// TODO: Avoid using the index of an array as key property in an element.
 							key={index}
-							className={`sticky top-0 z-10 border-b border-blue-gray-100 bg-blue-gray-50 p-2.5`}
+							className={
+								"sticky top-0 z-10 border-b border-blue-gray-100 bg-blue-gray-50 p-2.5"
+							}
 						>
 							<Typography variant="small" className="font-normal leading-none">
 								{tc(head)}
@@ -278,6 +284,7 @@ function RepositoryRow({
 		}
 	};
 
+	// TODO: Specify type
 	let dialog;
 	if (removeDialogOpen) {
 		dialog = (
@@ -365,18 +372,18 @@ function EnteringRepositoryInfo({
 	let foundHeaderValueError = false;
 	let foundDuplicateHeader = false;
 
-	let headerNameSet = new Set<string>();
+	const headerNameSet = new Set<string>();
 
-	for (let { name, value } of headerArray) {
-		let trimedName = name.trim();
-		let trimedValue = value.trim();
-		if (trimedName != "" || trimedValue != "") {
+	for (const { name, value } of headerArray) {
+		const trimedName = name.trim();
+		const trimedValue = value.trim();
+		if (trimedName !== "" || trimedValue !== "") {
 			// header (field) name is token (RFC 9110 section 5.1)
 			//   https://www.rfc-editor.org/rfc/rfc9110.html#name-field-names
 			// token is defined in 5.6.2
 			//   https://www.rfc-editor.org/rfc/rfc9110.html#name-tokens
 			if (
-				trimedName == "" ||
+				trimedName === "" ||
 				!trimedName.match(/[!#$%&'*+\-.^_`|~0-9a-zA-Z]/)
 			) {
 				foundHeaderNameError = true;
@@ -456,7 +463,7 @@ function EnteringRepositoryInfo({
 					value={url}
 					onChange={(e) => setUrl(e.target.value)}
 					placeholder={"https://vpm.anatawa12.com/vpm.json"}
-				></Input>
+				/>
 				<details>
 					<summary className={"font-bold"}>
 						{tc("vpm repositories:dialog:headers")}
@@ -627,6 +634,7 @@ function Confirming({
 						</Typography>
 						<ul className={"list-disc pl-6"}>
 							{Object.entries(headers).map(([key, value], idx) => (
+								// TODO: Avoid using the index of an array as key property in an element.
 								<li key={idx}>
 									{key}: {value}
 								</li>
@@ -639,6 +647,7 @@ function Confirming({
 				</Typography>
 				<ul className={"list-disc pl-6"}>
 					{repo.packages.map((info, idx) => (
+						// TODO: Avoid using the index of an array as key property in an element.
 						<li key={idx}>{info.display_name ?? info.name}</li>
 					))}
 				</ul>

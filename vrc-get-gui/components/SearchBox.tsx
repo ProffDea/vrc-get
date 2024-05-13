@@ -1,7 +1,7 @@
-import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
-import React from "react";
-import { useTranslation } from "react-i18next";
 import { InputNoLabel } from "@/components/InputNoLabel";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
+import type React from "react";
+import { useTranslation } from "react-i18next";
 
 export function SearchBox({
 	className,

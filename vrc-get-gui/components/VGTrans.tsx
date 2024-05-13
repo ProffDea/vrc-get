@@ -1,6 +1,6 @@
-import { Trans, useTranslation } from "react-i18next";
-import { TransProps } from "react-i18next/TransWithoutContext";
 import React from "react";
+import { Trans, useTranslation } from "react-i18next";
+import type { TransProps } from "react-i18next/TransWithoutContext";
 
 export function VGTrans(props: TransProps<string>) {
 	const { t } = useTranslation();

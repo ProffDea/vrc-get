@@ -1,11 +1,11 @@
-import i18next, { t as i18nextt } from "i18next";
-import { initReactI18next } from "react-i18next";
-import enJson from "@/locales/en.json5";
+import { tc as tcOriginal } from "@/components/VGTrans";
 import deJson from "@/locales/de.json5";
+import enJson from "@/locales/en.json5";
+import frJson from "@/locales/fr.json5";
 import jaJson from "@/locales/ja.json5";
 import zh_cnJson from "@/locales/zh_cn.json5";
-import frJson from "@/locales/fr.json5";
-import { tc as tcOriginal } from "@/components/VGTrans";
+import i18next, { t as i18nextt } from "i18next";
+import { initReactI18next } from "react-i18next";
 
 const languageResources = {
 	en: enJson,

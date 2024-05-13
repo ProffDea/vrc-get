@@ -7,6 +7,8 @@ type AsyncCallResult<P, R> =
 			type: "UnusedProgress";
 			progress: P;
 	  };
+
+// TODO: Specify type
 type AsyncCommand<A extends any[], P, R> = (
 	channel: string,
 	...args: A
@@ -19,9 +21,11 @@ type FinishedMessage<R> =
 	  }
 	| {
 			type: "Failed";
+			// TODO: Specify type
 			value: any;
 	  };
 
+// TODO: Specify type
 export function callAsyncCommand<A extends any[], P, R>(
 	command: AsyncCommand<A, P, R>,
 	args: A,
@@ -35,6 +39,7 @@ export function callAsyncCommand<A extends any[], P, R>(
 	return [cancel, callAsyncCommandImpl(channel, command, args, progress)];
 }
 
+// TODO: Specify type
 async function callAsyncCommandImpl<A extends any[], P, R>(
 	channel: string,
 	command: AsyncCommand<A, P, R>,
@@ -48,7 +53,7 @@ async function callAsyncCommandImpl<A extends any[], P, R>(
 		listen<FinishedMessage<R>>(`${channel}:finished`, (e) =>
 			finishHandler?.(e.payload),
 		),
-		listen<void>(`${channel}:cancelled`, (e) =>
+		listen<void>(`${channel}:cancelled`, (_) =>
 			finishHandler?.({ type: "Success", value: "cancelled" }),
 		),
 	]);
@@ -57,7 +62,7 @@ async function callAsyncCommandImpl<A extends any[], P, R>(
 		finishHandler = (message) => {
 			unlistenProgress();
 			unlistenFinished();
-			if (message.type == "Success") {
+			if (message.type === "Success") {
 				resolve(message.value);
 			} else {
 				reject(message.value);

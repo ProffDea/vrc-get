@@ -2,10 +2,10 @@
  * This file is used to generate a JSON file containing the licenses of all the dependencies.
  * This is based on the output of `cargo about generate --format=json` and `npx license-checker --production --json`.
  */
-import { promisify } from "node:util";
 import { exec as execCallback } from "node:child_process";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { promisify } from "node:util";
 
 const exec = promisify(execCallback);
 
@@ -413,7 +413,7 @@ defaultLicenseTexts.set(
 const licenses = new Map();
 
 // add npm libraries
-for (let [pkgNameAndVersion, module] of Object.entries(licenseChecker)) {
+for (const [pkgNameAndVersion, module] of Object.entries(licenseChecker)) {
 	const at = pkgNameAndVersion.lastIndexOf("@");
 	const pkgName = pkgNameAndVersion.slice(0, at);
 	if (pkgName === "vrc-get-gui") continue; // the package itself
@@ -435,13 +435,13 @@ for (let [pkgNameAndVersion, module] of Object.entries(licenseChecker)) {
 }
 
 // add rust libraries
-for (let license of cargoAbout.licenses) {
+for (const license of cargoAbout.licenses) {
 	const licenseText = license.text;
 	const licenseByText = licenses.get(license.id) ?? new Map();
 	licenses.set(license.id, licenseByText);
 	const packagesOfTheLicense = licenseByText.get(licenseText) ?? [];
 	licenseByText.set(licenseText, packagesOfTheLicense);
-	for (let usedBy of license.used_by) {
+	for (const usedBy of license.used_by) {
 		packagesOfTheLicense.push({
 			name: usedBy.crate.name,
 			version: usedBy.crate.version,
@@ -491,8 +491,8 @@ for (let license of cargoAbout.licenses) {
 // finally, put to array
 const result = [];
 
-for (let [license, licenseByText] of licenses) {
-	for (let [text, packages] of licenseByText) {
+for (const [license, licenseByText] of licenses) {
+	for (const [text, packages] of licenseByText) {
 		const name = licenseNames.get(license);
 		if (!name) throw new Error(`Unknown license: ${license}`);
 		result.push({

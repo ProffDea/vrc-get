@@ -1,6 +1,62 @@
 "use client";
 
 import {
+	useUnity2022Migration,
+	useUnity2022PatchMigration,
+} from "@/app/projects/manage/unity-migration";
+import { SearchBox } from "@/components/SearchBox";
+import { HNavBar, VStack } from "@/components/layout";
+import { VGOption, VGSelect } from "@/components/select";
+import { useBackupProjectModal } from "@/lib/backup-project";
+import {
+	type TauriBasePackageInfo,
+	type TauriPackage,
+	type TauriPackageChange,
+	type TauriPendingProjectChanges,
+	type TauriProjectDetails,
+	type TauriUnityVersions,
+	type TauriUserRepository,
+	type TauriVersion,
+	environmentHideRepository,
+	environmentPackages,
+	environmentRefetchPackages,
+	environmentRepositoriesInfo,
+	environmentSetHideLocalUserPackages,
+	environmentShowRepository,
+	environmentUnityVersions,
+	projectApplyPendingChanges,
+	projectDetails,
+	projectInstallMultiplePackage,
+	projectInstallPackage,
+	projectRemovePackages,
+	projectResolve,
+	projectUpgradeMultiplePackage,
+	utilOpen,
+} from "@/lib/bindings";
+import { tc, tt } from "@/lib/i18n";
+import { nop } from "@/lib/nop";
+import { nameFromPath } from "@/lib/os";
+import { useRemoveProjectModal } from "@/lib/remove-project";
+import { shellOpen } from "@/lib/shellOpen";
+import { toastError, toastSuccess, toastThrownError } from "@/lib/toast";
+import { useOpenUnity } from "@/lib/use-open-unity";
+import {
+	compareUnityVersion,
+	compareVersion,
+	toVersionString,
+} from "@/lib/version";
+import {
+	ArrowUpCircleIcon,
+	MinusCircleIcon,
+	PlusCircleIcon,
+} from "@heroicons/react/24/outline";
+import {
+	ArrowLeftIcon,
+	ArrowPathIcon,
+	ChevronDownIcon,
+	EllipsisHorizontalIcon,
+} from "@heroicons/react/24/solid";
+import {
 	Button,
 	ButtonGroup,
 	Card,
@@ -20,74 +76,13 @@ import {
 	Tooltip,
 	Typography,
 } from "@material-tailwind/react";
-import React, {
-	Fragment,
-	memo,
-	Suspense,
-	useCallback,
-	useMemo,
-	useState,
-} from "react";
-import {
-	ArrowLeftIcon,
-	ArrowPathIcon,
-	ChevronDownIcon,
-	EllipsisHorizontalIcon,
-} from "@heroicons/react/24/solid";
-import {
-	ArrowUpCircleIcon,
-	MinusCircleIcon,
-	PlusCircleIcon,
-} from "@heroicons/react/24/outline";
-import { HNavBar, VStack } from "@/components/layout";
-import { useRouter, useSearchParams } from "next/navigation";
-import { SearchBox } from "@/components/SearchBox";
 import { useQueries } from "@tanstack/react-query";
-import {
-	environmentHideRepository,
-	environmentPackages,
-	environmentRefetchPackages,
-	environmentRepositoriesInfo,
-	environmentSetHideLocalUserPackages,
-	environmentShowRepository,
-	environmentUnityVersions,
-	projectApplyPendingChanges,
-	projectDetails,
-	projectInstallMultiplePackage,
-	projectInstallPackage,
-	projectRemovePackages,
-	projectResolve,
-	projectUpgradeMultiplePackage,
-	TauriBasePackageInfo,
-	TauriPackage,
-	TauriPackageChange,
-	TauriPendingProjectChanges,
-	TauriProjectDetails,
-	TauriUnityVersions,
-	TauriUserRepository,
-	TauriVersion,
-	utilOpen,
-} from "@/lib/bindings";
-import {
-	compareUnityVersion,
-	compareVersion,
-	toVersionString,
-} from "@/lib/version";
-import { VGOption, VGSelect } from "@/components/select";
-import { useOpenUnity } from "@/lib/use-open-unity";
-import { nop } from "@/lib/nop";
-import { shellOpen } from "@/lib/shellOpen";
-import { toastError, toastSuccess, toastThrownError } from "@/lib/toast";
-import { useRemoveProjectModal } from "@/lib/remove-project";
-import { tc, tt } from "@/lib/i18n";
-import { nameFromPath } from "@/lib/os";
-import { useBackupProjectModal } from "@/lib/backup-project";
-import {
-	useUnity2022Migration,
-	useUnity2022PatchMigration,
-} from "@/app/projects/manage/unity-migration";
+import { useRouter, useSearchParams } from "next/navigation";
+import type React from "react";
+import { Suspense, memo, useCallback, useMemo, useState } from "react";
 
-export default function Page(props: {}) {
+// biome-ignore lint/suspicious/noExplicitAny: unknown
+export default function Page(props: any) {
 	return (
 		<Suspense>
 			<PageBody {...props} />
@@ -143,13 +138,13 @@ function updateModeFromPackageModes(
 ): BulkUpdateMode {
 	const asSet = new Set(map);
 
-	if (asSet.size == 0) {
+	if (asSet.size === 0) {
 		return "any";
 	}
-	if (asSet.size == 1) {
+	if (asSet.size === 1) {
 		return [...asSet][0];
 	}
-	if (asSet.size == 2) {
+	if (asSet.size === 2) {
 		if (asSet.has("remove") && asSet.has("upgradeOrRemove")) {
 			return "remove";
 		}
@@ -214,23 +209,23 @@ function PageBody() {
 
 	const packageRowsData = useMemo(() => {
 		const packages =
-			packagesResult.status == "success" ? packagesResult.data : [];
+			packagesResult.status === "success" ? packagesResult.data : [];
 		const details =
-			detailsResult.status == "success" ? detailsResult.data : null;
+			detailsResult.status === "success" ? detailsResult.data : null;
 		const hiddenRepositories =
-			repositoriesInfo.status == "success"
+			repositoriesInfo.status === "success"
 				? repositoriesInfo.data.hidden_user_repositories
 				: [];
 		const hideUserPackages =
-			repositoriesInfo.status == "success"
+			repositoriesInfo.status === "success"
 				? repositoriesInfo.data.hide_local_user_packages
 				: false;
 		const definedRepositories =
-			repositoriesInfo.status == "success"
+			repositoriesInfo.status === "success"
 				? repositoriesInfo.data.user_repositories
 				: [];
 		const showPrereleasePackages =
-			repositoriesInfo.status == "success"
+			repositoriesInfo.status === "success"
 				? repositoriesInfo.data.show_prerelease_packages
 				: false;
 		return combinePackagesAndProjectDetails(
@@ -264,7 +259,7 @@ function PageBody() {
 	const hiddenUserRepositories = useMemo(
 		() =>
 			new Set(
-				repositoriesInfo.status == "success"
+				repositoriesInfo.status === "success"
 					? repositoriesInfo.data.hidden_user_repositories
 					: [],
 			),
@@ -346,13 +341,13 @@ function PageBody() {
 	const onUpgradeAllRequest = async () => {
 		try {
 			setInstallStatus({ status: "creatingChanges" });
-			let packages: number[] = [];
+			const packages: number[] = [];
 			let envVersion: number | undefined = undefined;
-			for (let packageRow of packageRows) {
+			for (const packageRow of packageRows) {
 				if (packageRow.latest.status === "upgradable") {
 					if (envVersion == null)
 						envVersion = packageRow.latest.pkg.env_version;
-					else if (envVersion != packageRow.latest.pkg.env_version)
+					else if (envVersion !== packageRow.latest.pkg.env_version)
 						throw new Error("Inconsistent env_version");
 					packages.push(packageRow.latest.pkg.index);
 				}
@@ -417,17 +412,17 @@ function PageBody() {
 	const onUpgradeBulkRequested = async () => {
 		try {
 			setInstallStatus({ status: "creatingChanges" });
-			let packageIds = new Set(bulkUpdatePackageIds.map(([id, mode]) => id));
-			let packages: number[] = [];
+			const packageIds = new Set(bulkUpdatePackageIds.map(([id, mode]) => id));
+			const packages: number[] = [];
 			let envVersion: number | undefined = undefined;
-			for (let packageRow of packageRows) {
+			for (const packageRow of packageRows) {
 				if (packageIds.has(packageRow.id)) {
 					if (packageRow.latest.status !== "upgradable")
 						throw new Error("Package is not upgradable");
 
 					if (envVersion == null)
 						envVersion = packageRow.latest.pkg.env_version;
-					else if (envVersion != packageRow.latest.pkg.env_version)
+					else if (envVersion !== packageRow.latest.pkg.env_version)
 						throw new Error("Inconsistent env_version");
 
 					packages.push(packageRow.latest.pkg.index);
@@ -457,17 +452,17 @@ function PageBody() {
 	const onInstallBulkRequested = async () => {
 		try {
 			setInstallStatus({ status: "creatingChanges" });
-			let packageIds = new Set(bulkUpdatePackageIds.map(([id, mode]) => id));
-			let packages: number[] = [];
+			const packageIds = new Set(bulkUpdatePackageIds.map(([id, mode]) => id));
+			const packages: number[] = [];
 			let envVersion: number | undefined = undefined;
-			for (let packageRow of packageRows) {
+			for (const packageRow of packageRows) {
 				if (packageIds.has(packageRow.id)) {
 					if (packageRow.latest.status !== "contains")
 						throw new Error("Package is not installable");
 
 					if (envVersion == null)
 						envVersion = packageRow.latest.pkg.env_version;
-					else if (envVersion != packageRow.latest.pkg.env_version)
+					else if (envVersion !== packageRow.latest.pkg.env_version)
 						throw new Error("Inconsistent env_version");
 
 					packages.push(packageRow.latest.pkg.index);
@@ -517,21 +512,16 @@ function PageBody() {
 		const possibleUpdate: PackageBulkUpdateMode | "nothing" =
 			bulkUpdateModeForPackage(row);
 
-		if (possibleUpdate == "nothing") return;
+		if (possibleUpdate === "nothing") return;
 		setBulkUpdatePackageIds((prev) => {
 			if (prev.some(([id, _]) => id === row.id)) return prev;
 			return [...prev, [row.id, possibleUpdate]];
 		});
 	}, []);
 
-	const removeBulkUpdatePackage = useCallback(
-		(row: PackageRowInfo) => {
-			setBulkUpdatePackageIds((prev) =>
-				prev.filter(([id, _]) => id !== row.id),
-			);
-		},
-		[setBulkUpdatePackageIds],
-	);
+	const removeBulkUpdatePackage = useCallback((row: PackageRowInfo) => {
+		setBulkUpdatePackageIds((prev) => prev.filter(([id, _]) => id !== row.id));
+	}, []);
 
 	const applyChanges = async ({
 		changes,
@@ -571,8 +561,9 @@ function PageBody() {
 				case "bulkRemoved":
 					toastSuccess(tt("projects:manage:toast:selected packages removed"));
 					break;
-				default:
-					let _: never = requested;
+				default: {
+					const _: never = requested;
+				}
 			}
 		} catch (e) {
 			console.error(e);
@@ -592,7 +583,7 @@ function PageBody() {
 		refresh: onRefresh,
 	});
 
-	const installingPackage = installStatus.status != "normal";
+	const installingPackage = installStatus.status !== "normal";
 	const isLoading =
 		packagesResult.isFetching ||
 		detailsResult.isFetching ||
@@ -604,7 +595,7 @@ function PageBody() {
 	function checkIfMigrationTo2022Recommended(data: TauriProjectDetails) {
 		if (data.unity == null) return false;
 		// migrate if the project is using 2019 and has vrcsdk
-		if (data.unity[0] != 2019) return false;
+		if (data.unity[0] !== 2019) return false;
 		return data.installed_packages.some(([id, _]) =>
 			VRCSDK_PACKAGES.includes(id),
 		);
@@ -620,18 +611,18 @@ function PageBody() {
 			return false;
 
 		if (data.unity == null) return false;
-		if (data.unity[0] != 2022) return false;
+		if (data.unity[0] !== 2022) return false;
 		// unity patch is 2022.
-		return data.unity_str != unityData.recommended_version;
+		return data.unity_str !== unityData.recommended_version;
 	}
 
 	const isResolveRecommended = detailsResult?.data?.should_resolve;
 	const isMigrationTo2022Recommended =
-		detailsResult.status == "success" &&
+		detailsResult.status === "success" &&
 		checkIfMigrationTo2022Recommended(detailsResult.data);
 	const is2022PatchMigrationRecommended =
-		detailsResult.status == "success" &&
-		unityVersionsResult.status == "success" &&
+		detailsResult.status === "success" &&
+		unityVersionsResult.status === "success" &&
 		checkIf2022PatchMigrationRecommended(
 			detailsResult.data,
 			unityVersionsResult.data,
@@ -683,7 +674,7 @@ function PageBody() {
 					<div className={"flex-grow-0 flex-shrink-0"}>
 						<VGSelect
 							value={
-								detailsResult.status == "success" ? (
+								detailsResult.status === "success" ? (
 									detailsResult.data.unity_str ?? "unknown"
 								) : (
 									<span className={"text-blue-gray-300"}>Loading...</span>
@@ -796,14 +787,14 @@ function PageBody() {
 								/>
 								<UserLocalRepositoryMenuItem
 									hideUserLocalPackages={
-										repositoriesInfo.status == "success"
+										repositoriesInfo.status === "success"
 											? repositoriesInfo.data.hide_local_user_packages
 											: false
 									}
 									refetch={onRefreshRepositories}
 								/>
 								<hr className="my-3" />
-								{repositoriesInfo.status == "success"
+								{repositoriesInfo.status === "success"
 									? repositoriesInfo.data.user_repositories.map(
 											(repository) => (
 												<RepositoryMenuItem
@@ -832,12 +823,17 @@ function PageBody() {
 							<thead>
 								<tr>
 									<th
-										className={`sticky top-0 z-10 border-b border-blue-gray-100 bg-blue-gray-50`}
+										className={
+											"sticky top-0 z-10 border-b border-blue-gray-100 bg-blue-gray-50"
+										}
 									></th>
 									{TABLE_HEAD.map((head, index) => (
 										<th
+											// TODO: Avoid using the index of an array as key property in an element.
 											key={index}
-											className={`sticky top-0 z-10 border-b border-blue-gray-100 bg-blue-gray-50 p-2.5`}
+											className={
+												"sticky top-0 z-10 border-b border-blue-gray-100 bg-blue-gray-50 p-2.5"
+											}
 										>
 											<Typography
 												variant="small"
@@ -848,7 +844,9 @@ function PageBody() {
 										</th>
 									))}
 									<th
-										className={`sticky top-0 z-10 border-b border-blue-gray-100 bg-blue-gray-50 p-2.5`}
+										className={
+											"sticky top-0 z-10 border-b border-blue-gray-100 bg-blue-gray-50 p-2.5"
+										}
 									/>
 								</tr>
 							</thead>
@@ -975,13 +973,13 @@ function BulkUpdateCard({
 	bulkInstallAll?: () => void;
 	cancel?: () => void;
 }) {
-	if (bulkUpdateMode == "any") return null;
+	if (bulkUpdateMode === "any") return null;
 
-	const canInstall = bulkUpdateMode == "install";
+	const canInstall = bulkUpdateMode === "install";
 	const canUpgrade =
-		bulkUpdateMode == "upgrade" || bulkUpdateMode == "upgradeOrRemove";
+		bulkUpdateMode === "upgrade" || bulkUpdateMode === "upgradeOrRemove";
 	const canRemove =
-		bulkUpdateMode == "remove" || bulkUpdateMode == "upgradeOrRemove";
+		bulkUpdateMode === "remove" || bulkUpdateMode === "upgradeOrRemove";
 
 	return (
 		<Card
@@ -1080,37 +1078,34 @@ function ProjectChangesDialog({
 									)}
 								</ListItem>
 							);
-						} else {
-							const name = getPackageDisplayName(pkgId);
-							switch (pkgChange.Remove) {
-								case "Requested":
-									return (
-										<TypographyItem key={pkgId}>
-											{tc(
-												"projects:manage:dialog:uninstall package as requested",
-												{ name },
-											)}
-										</TypographyItem>
-									);
-								case "Legacy":
-									return (
-										<TypographyItem key={pkgId}>
-											{tc(
-												"projects:manage:dialog:uninstall package as legacy",
-												{ name },
-											)}
-										</TypographyItem>
-									);
-								case "Unused":
-									return (
-										<TypographyItem key={pkgId}>
-											{tc(
-												"projects:manage:dialog:uninstall package as unused",
-												{ name },
-											)}
-										</TypographyItem>
-									);
-							}
+						}
+						const name = getPackageDisplayName(pkgId);
+						switch (pkgChange.Remove) {
+							case "Requested":
+								return (
+									<TypographyItem key={pkgId}>
+										{tc(
+											"projects:manage:dialog:uninstall package as requested",
+											{ name },
+										)}
+									</TypographyItem>
+								);
+							case "Legacy":
+								return (
+									<TypographyItem key={pkgId}>
+										{tc("projects:manage:dialog:uninstall package as legacy", {
+											name,
+										})}
+									</TypographyItem>
+								);
+							case "Unused":
+								return (
+									<TypographyItem key={pkgId}>
+										{tc("projects:manage:dialog:uninstall package as unused", {
+											name,
+										})}
+									</TypographyItem>
+								);
 						}
 					})}
 				</List>
@@ -1317,7 +1312,7 @@ function combinePackagesAndProjectDetails(
 	hiddenRepositories?: string[] | null,
 	hideLocalUserPackages?: boolean,
 	definedRepositories: TauriUserRepository[] = [],
-	showPrereleasePackages: boolean = false,
+	showPrereleasePackages = false,
 ): PackageRowInfo[] {
 	const hiddenRepositoriesSet = new Set(hiddenRepositories ?? []);
 
@@ -1372,7 +1367,7 @@ function combinePackagesAndProjectDetails(
 			packages = packagesPerRepository.get(pkg.source.Remote.id) ?? [];
 			packagesPerRepository.set(pkg.source.Remote.id, packages);
 		} else {
-			let never: never = pkg.source;
+			const never: never = pkg.source;
 			throw new Error("unreachable");
 		}
 
@@ -1384,21 +1379,19 @@ function combinePackagesAndProjectDetails(
 	const getRowInfo = (pkg: TauriBasePackageInfo): PackageRowInfo => {
 		let packageRowInfo = packagesTable.get(pkg.name);
 		if (packageRowInfo == null) {
-			packagesTable.set(
-				pkg.name,
-				(packageRowInfo = {
-					id: pkg.name,
-					displayName: pkg.display_name ?? pkg.name,
-					aliases: pkg.aliases,
-					infoSource: pkg.version,
-					unityCompatible: new Map(),
-					unityIncompatible: new Map(),
-					sources: new Set(),
-					isThereSource: false,
-					installed: null,
-					latest: { status: "none" },
-				}),
-			);
+			packageRowInfo = {
+				id: pkg.name,
+				displayName: pkg.display_name ?? pkg.name,
+				aliases: pkg.aliases,
+				infoSource: pkg.version,
+				unityCompatible: new Map(),
+				unityIncompatible: new Map(),
+				sources: new Set(),
+				isThereSource: false,
+				installed: null,
+				latest: { status: "none" },
+			};
+			packagesTable.set(pkg.name, packageRowInfo);
 		}
 		return packageRowInfo;
 	};
@@ -1435,18 +1428,18 @@ function combinePackagesAndProjectDetails(
 	packagesPerRepository.delete("com.vrchat.repos.curated");
 
 	// for repositories
-	for (let definedRepository of definedRepositories) {
+	for (const definedRepository of definedRepositories) {
 		packagesPerRepository.get(definedRepository.id)?.forEach(addPackage);
 		packagesPerRepository.delete(definedRepository.id);
 	}
 
 	// in case of repository is not defined
-	for (let packages of packagesPerRepository.values()) {
+	for (const packages of packagesPerRepository.values()) {
 		packages.forEach(addPackage);
 	}
 
 	// sort versions
-	for (let value of packagesTable.values()) {
+	for (const value of packagesTable.values()) {
 		value.unityCompatible = new Map(
 			[...value.unityCompatible].sort(
 				(a, b) => -compareVersion(a[1].version, b[1].version),
@@ -1460,7 +1453,7 @@ function combinePackagesAndProjectDetails(
 	}
 
 	// set latest info
-	for (let value of packagesTable.values()) {
+	for (const value of packagesTable.values()) {
 		const latestPackage = value.unityCompatible.values().next().value;
 		if (latestPackage) {
 			value.latest = { status: "contains", pkg: latestPackage };
@@ -1484,7 +1477,7 @@ function combinePackagesAndProjectDetails(
 			packageRowInfo.isThereSource = knownPackages.has(pkg.name);
 
 			// if we have the latest version, check if it's upgradable
-			if (packageRowInfo.latest.status != "none") {
+			if (packageRowInfo.latest.status !== "none") {
 				const compare = compareVersion(
 					pkg.version,
 					packageRowInfo.latest.pkg.version,
@@ -1503,13 +1496,13 @@ function combinePackagesAndProjectDetails(
 		packagesTable.get("com.vrchat.avatars")?.installed != null;
 	const isWorldsSdkInstalled =
 		packagesTable.get("com.vrchat.worlds")?.installed != null;
-	if (isAvatarsSdkInstalled != isWorldsSdkInstalled) {
+	if (isAvatarsSdkInstalled !== isWorldsSdkInstalled) {
 		// if either avatars or worlds sdk is installed, remove the packages for the other SDK.
 
 		// collect dependant packages
 		const dependantPackages = new Map<string, Set<string>>();
-		for (let pkg of packagesTable.values()) {
-			if (pkg.latest.status != "none") {
+		for (const pkg of packagesTable.values()) {
+			if (pkg.latest.status !== "none") {
 				for (const dependency of pkg.latest.pkg.vpm_dependencies) {
 					if (!dependantPackages.has(dependency)) {
 						dependantPackages.set(dependency, new Set());
@@ -1596,7 +1589,12 @@ const PackageRow = memo(function PackageRow({
 			if (!pkgVersion) return;
 			onInstallRequested(pkgVersion);
 		},
-		[onInstallRequested, pkg.installed],
+		[
+			onInstallRequested,
+			pkg.installed,
+			pkg.unityIncompatible,
+			pkg.unityCompatible,
+		],
 	);
 	const installLatest = () => {
 		if (!latestVersion) return;
@@ -1654,7 +1652,7 @@ const PackageRow = memo(function PackageRow({
 				/>
 			</td>
 			<td className={`${noGrowCellClass} max-w-32 overflow-hidden`}>
-				{pkg.sources.size == 0 ? (
+				{pkg.sources.size === 0 ? (
 					pkg.isThereSource ? (
 						<Typography className="text-blue-gray-400">
 							{tc("projects:manage:source not selected")}
@@ -1664,7 +1662,7 @@ const PackageRow = memo(function PackageRow({
 							{tc("projects:manage:none")}
 						</Typography>
 					)
-				) : pkg.sources.size == 1 ? (
+				) : pkg.sources.size === 1 ? (
 					<Tooltip content={[...pkg.sources][0]}>
 						<Typography className="overflow-hidden overflow-ellipsis">
 							{[...pkg.sources][0]}
@@ -1707,16 +1705,16 @@ function bulkUpdateModeForPackage(
 	if (pkg.installed) {
 		if (pkg.latest.status === "upgradable") {
 			return "upgradeOrRemove";
-		} else {
-			return "remove";
 		}
-	} else {
-		if (pkg.latest.status !== "none") {
-			return "install";
-		} else {
-			return "nothing";
-		}
+
+		return "remove";
 	}
+
+	if (pkg.latest.status !== "none") {
+		return "install";
+	}
+
+	return "nothing";
 }
 
 const PackageVersionSelector = memo(function PackageVersionSelector({
@@ -1740,7 +1738,12 @@ const PackageVersionSelector = memo(function PackageVersionSelector({
 			if (!pkgVersion) return;
 			onInstallRequested(pkgVersion);
 		},
-		[onInstallRequested, pkg.installed],
+		[
+			onInstallRequested,
+			pkg.installed,
+			pkg.unityIncompatible,
+			pkg.unityCompatible,
+		],
 	);
 
 	const versionNames = [...pkg.unityCompatible.keys()];
@@ -1806,16 +1809,16 @@ function PackageInstalledInfo({
 					{version} {tc("projects:manage:yanked")}
 				</Typography>
 			);
-		} else {
-			return <Typography>{version}</Typography>;
 		}
-	} else {
-		return (
-			<Typography className="text-blue-gray-400">
-				{tc("projects:manage:none")}
-			</Typography>
-		);
+
+		return <Typography>{version}</Typography>;
 	}
+
+	return (
+		<Typography className="text-blue-gray-400">
+			{tc("projects:manage:none")}
+		</Typography>
+	);
 }
 
 function PackageLatestInfo({
@@ -1856,8 +1859,9 @@ function PackageLatestInfo({
 					</Button>
 				</Tooltip>
 			);
-		default:
-			let _: never = info;
+		default: {
+			const _: never = info;
+		}
 	}
 }
 

@@ -1,5 +1,5 @@
 import { Input } from "@material-tailwind/react";
-import React, { ComponentProps } from "react";
+import React, { type ComponentProps } from "react";
 
 export function InputNoLabel(props: ComponentProps<typeof Input>) {
 	return (

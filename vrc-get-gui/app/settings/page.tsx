@@ -1,15 +1,9 @@
 "use client";
 
+import { HNavBar, VStack } from "@/components/layout";
+import { VGOption, VGSelect } from "@/components/select";
 import {
-	Button,
-	Card,
-	Checkbox,
-	Input,
-	Typography,
-} from "@material-tailwind/react";
-import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import {
+	type TauriEnvironmentSettings,
 	environmentGetSettings,
 	environmentPickProjectBackupPath,
 	environmentPickProjectDefaultPath,
@@ -18,18 +12,24 @@ import {
 	environmentSetBackupFormat,
 	environmentSetLanguage,
 	environmentSetShowPrereleasePackages,
-	TauriEnvironmentSettings,
 	utilGetVersion,
 } from "@/lib/bindings";
-import { HNavBar, VStack } from "@/components/layout";
-import React from "react";
-import { toastError, toastSuccess, toastThrownError } from "@/lib/toast";
 import i18next, { languages, tc, tt } from "@/lib/i18n";
-import { VGOption, VGSelect } from "@/components/select";
-import { useFilePickerFunction } from "@/lib/use-file-picker-dialog";
-import { emit } from "@tauri-apps/api/event";
-import { shellOpen } from "@/lib/shellOpen";
 import { loadOSApi } from "@/lib/os";
+import { shellOpen } from "@/lib/shellOpen";
+import { toastError, toastSuccess, toastThrownError } from "@/lib/toast";
+import { useFilePickerFunction } from "@/lib/use-file-picker-dialog";
+import {
+	Button,
+	Card,
+	Checkbox,
+	Input,
+	Typography,
+} from "@material-tailwind/react";
+import { useQuery } from "@tanstack/react-query";
+import { emit } from "@tauri-apps/api/event";
+import Link from "next/link";
+import type React from "react";
 
 export default function Page() {
 	const result = useQuery({
@@ -37,6 +37,7 @@ export default function Page() {
 		queryFn: environmentGetSettings,
 	});
 
+	// TODO: Specify type
 	let body;
 	switch (result.status) {
 		case "error":
@@ -48,8 +49,9 @@ export default function Page() {
 		case "success":
 			body = <Settings settings={result.data} refetch={result.refetch} />;
 			break;
-		default:
+		default: {
 			const _exhaustiveCheck: never = result;
+		}
 	}
 
 	return (
@@ -96,8 +98,9 @@ function Settings({
 					toastSuccess(tt("settings:toast:unity hub path updated"));
 					refetch();
 					break;
-				default:
+				default: {
 					const _exhaustiveCheck: never = result;
+				}
 			}
 		} catch (e) {
 			console.error(e);
@@ -122,8 +125,9 @@ function Settings({
 					toastSuccess(tt("settings:toast:unity added"));
 					refetch();
 					break;
-				default:
+				default: {
 					const _exhaustiveCheck: never = result;
+				}
 			}
 		} catch (e) {
 			console.error(e);
@@ -145,8 +149,9 @@ function Settings({
 					toastSuccess(tt("settings:toast:default project path updated"));
 					refetch();
 					break;
-				default:
+				default: {
 					const _exhaustiveCheck: never = result;
+				}
 			}
 		} catch (e) {
 			console.error(e);
@@ -168,8 +173,9 @@ function Settings({
 					toastSuccess(tt("settings:toast:backup path updated"));
 					refetch();
 					break;
-				default:
+				default: {
 					const _exhaustiveCheck: never = result;
+				}
 			}
 		} catch (e) {
 			console.error(e);
@@ -298,7 +304,7 @@ function Settings({
 					<label className={"flex items-center"}>
 						<h3>{tc("settings:backup:format")}</h3>
 						<VGSelect
-							value={tc("settings:backup:format:" + settings.backup_format)}
+							value={tc(`settings:backup:format:${settings.backup_format}`)}
 							onChange={setBackupFormat}
 						>
 							<VGOption value={"default"}>
@@ -399,8 +405,11 @@ function UnityTable({
 				<tr>
 					{UNITY_TABLE_HEAD.map((head, index) => (
 						<th
+							// TODO: Avoid using the index of an array as key property in an element.
 							key={index}
-							className={`sticky top-0 z-10 border-b border-blue-gray-100 bg-blue-gray-50 p-2.5`}
+							className={
+								"sticky top-0 z-10 border-b border-blue-gray-100 bg-blue-gray-50 p-2.5"
+							}
 						>
 							<Typography variant="small" className="font-normal leading-none">
 								{tc(head)}

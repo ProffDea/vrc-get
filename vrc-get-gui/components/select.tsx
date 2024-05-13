@@ -1,6 +1,6 @@
 // based on https://github.com/creativetimofficial/material-tailwind/blob/main/packages/material-tailwind-react/src/components/Select/index.tsx#L298
 
-import React, { createContext, useContext, useState } from "react";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import {
 	Menu,
 	MenuHandler,
@@ -10,11 +10,12 @@ import {
 } from "@material-tailwind/react";
 import findMatch from "@material-tailwind/react/utils/findMatch";
 import objectsToString from "@material-tailwind/react/utils/objectsToString";
-import { twMerge } from "tailwind-merge";
 import classnames from "classnames";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import React, { createContext, useContext, useState } from "react";
+import { twMerge } from "tailwind-merge";
 
 interface SelectContext {
+	// TODO: Specify type
 	onClick(value: any): void;
 }
 
@@ -35,6 +36,7 @@ export function VGSelect({
 	value?: React.ReactNode;
 	className?: string;
 	menuClassName?: string;
+	// TODO: Specify type
 	onChange?: (value: any) => void;
 }) {
 	const [state, setState] = useState<string>("close");
@@ -45,6 +47,7 @@ export function VGSelect({
 	const { base, variants } = styles;
 
 	const contextValue: SelectContext = {
+		// TODO: Specify type
 		onClick(value: any) {
 			onChange?.(value);
 			setOpen(false);
@@ -81,14 +84,14 @@ export function VGSelect({
 		} else {
 			setState("close");
 		}
-	}, [open, value]);
+	}, [open]);
 
 	return (
 		<SelectContext.Provider value={contextValue}>
 			<Menu open={open} handler={() => setOpen(!open)}>
 				<div className={containerClasses}>
 					<MenuHandler>
-						<button className={selectClasses} disabled={disabled}>
+						<button className={selectClasses} disabled={disabled} type="button">
 							<span className={buttonContentClasses}>{value}</span>
 							<div className={arrowClasses}>
 								<ChevronDownIcon className="size-3" />
@@ -112,6 +115,7 @@ function VGOptionImpl(
 		value,
 	}: {
 		children: React.ReactNode;
+		// TODO: Specify type
 		value: any;
 	},
 	ref: React.Ref<HTMLButtonElement>,

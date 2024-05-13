@@ -1,5 +1,6 @@
 declare module "*.json5" {
-	const content: any;
+  // TODO: Specify type
+  const content: any;
 
-	export default content;
+  export default content;
 }

@@ -1,5 +1,47 @@
 "use client";
 
+import { SearchBox } from "@/components/SearchBox";
+import { HNavBar, VStack } from "@/components/layout";
+import { VGOption, VGSelect } from "@/components/select";
+import { useBackupProjectModal } from "@/lib/backup-project";
+import {
+	type TauriProject,
+	type TauriProjectDirCheckResult,
+	type TauriProjectTemplate,
+	type TauriProjectType,
+	environmentAddProjectWithPicker,
+	environmentCheckProjectName,
+	environmentCopyProjectForMigration,
+	environmentCreateProject,
+	environmentGetProjectSorting,
+	environmentPickProjectDefaultPath,
+	environmentProjectCreationInformation,
+	environmentProjects,
+	environmentSetFavoriteProject,
+	environmentSetProjectSorting,
+	environmentUnityVersions,
+	projectMigrateProjectToVpm,
+	utilOpen,
+} from "@/lib/bindings";
+import { tc, tt } from "@/lib/i18n";
+import { nop } from "@/lib/nop";
+import { pathSeparator } from "@/lib/os";
+import { useRemoveProjectModal } from "@/lib/remove-project";
+import { toastError, toastSuccess, toastThrownError } from "@/lib/toast";
+import { useFilePickerFunction } from "@/lib/use-file-picker-dialog";
+import { type OpenUnityFunction, useOpenUnity } from "@/lib/use-open-unity";
+import { compareUnityVersionString } from "@/lib/version";
+import { ChevronUpIcon } from "@heroicons/react/24/outline";
+import {
+	ArrowPathIcon,
+	ChevronDownIcon,
+	ChevronUpDownIcon,
+	EllipsisHorizontalIcon,
+	GlobeAltIcon,
+	QuestionMarkCircleIcon,
+	StarIcon,
+	UserCircleIcon,
+} from "@heroicons/react/24/solid";
 import {
 	Button,
 	ButtonGroup,
@@ -19,58 +61,11 @@ import {
 	Tooltip,
 	Typography,
 } from "@material-tailwind/react";
-import React, {
-	forwardRef,
-	Fragment,
-	useEffect,
-	useMemo,
-	useState,
-} from "react";
-import {
-	ArrowPathIcon,
-	ChevronDownIcon,
-	ChevronUpDownIcon,
-	EllipsisHorizontalIcon,
-	GlobeAltIcon,
-	QuestionMarkCircleIcon,
-	StarIcon,
-	UserCircleIcon,
-} from "@heroicons/react/24/solid";
-import { HNavBar, VStack } from "@/components/layout";
-import {
-	environmentAddProjectWithPicker,
-	environmentCheckProjectName,
-	environmentCopyProjectForMigration,
-	environmentCreateProject,
-	environmentGetProjectSorting,
-	environmentPickProjectDefaultPath,
-	environmentProjectCreationInformation,
-	environmentProjects,
-	environmentSetFavoriteProject,
-	environmentSetProjectSorting,
-	environmentUnityVersions,
-	projectMigrateProjectToVpm,
-	TauriProject,
-	TauriProjectDirCheckResult,
-	TauriProjectTemplate,
-	TauriProjectType,
-	utilOpen,
-} from "@/lib/bindings";
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
-import { SearchBox } from "@/components/SearchBox";
-import { nop } from "@/lib/nop";
 import { useDebounce } from "@uidotdev/usehooks";
-import { VGOption, VGSelect } from "@/components/select";
-import { toastError, toastSuccess, toastThrownError } from "@/lib/toast";
-import { useRemoveProjectModal } from "@/lib/remove-project";
-import { tc, tt } from "@/lib/i18n";
-import { useFilePickerFunction } from "@/lib/use-file-picker-dialog";
-import { pathSeparator } from "@/lib/os";
-import { useBackupProjectModal } from "@/lib/backup-project";
-import { ChevronUpIcon } from "@heroicons/react/24/outline";
-import { compareUnityVersionString } from "@/lib/version";
-import { useOpenUnity, OpenUnityFunction } from "@/lib/use-open-unity";
+import { useRouter } from "next/navigation";
+import type React from "react";
+import { Fragment, forwardRef, useEffect, useMemo, useState } from "react";
 
 const sortings = ["lastModified", "name", "unity", "type"] as const;
 
@@ -116,9 +111,9 @@ export default function Page() {
 			/>
 			<main className="flex-shrink overflow-hidden flex">
 				<Card className="w-full overflow-x-auto overflow-y-auto shadow-none">
-					{result.status == "pending" ? (
+					{result.status === "pending" ? (
 						<Card className={"p-4"}>{tc("general:loading...")}</Card>
-					) : result.status == "error" ? (
+					) : result.status === "error" ? (
 						<Card className={"p-4"}>
 							{tc("projects:error:load error", { msg: result.error.message })}
 						</Card>
@@ -183,7 +178,7 @@ function compareProjectType(
 	if (a === "Avatars") return 1;
 	if (b === "Avatars") return -1;
 
-	let _: never = a;
+	const _: never = a;
 	return 0;
 }
 
@@ -217,7 +212,7 @@ function ProjectsTable({
 	}, []);
 
 	const projectsShown = useMemo(() => {
-		let searched = projects.filter((project) =>
+		const searched = projects.filter((project) =>
 			project.name.toLowerCase().includes(search?.toLowerCase() ?? ""),
 		);
 		searched.sort((a, b) => b.last_modified - a.last_modified);
@@ -250,8 +245,9 @@ function ProjectsTable({
 			case "unityReversed":
 				searched.sort((a, b) => compareUnityVersionString(b.unity, a.unity));
 				break;
-			default:
-				let _: never = sorting;
+			default: {
+				const _: never = sorting;
+			}
 		}
 		searched.sort((a, b) => {
 			if (a.favorite && !b.favorite) return -1;
@@ -261,8 +257,8 @@ function ProjectsTable({
 		return searched;
 	}, [projects, sorting, search]);
 
-	const thClass = `sticky top-0 z-10 border-b border-blue-gray-100 p-2.5`;
-	const iconClass = `size-3 invisible project-table-header-chevron-up-down`;
+	const thClass = "sticky top-0 z-10 border-b border-blue-gray-100 p-2.5";
+	const iconClass = "size-3 invisible project-table-header-chevron-up-down";
 
 	const setSorting = async (simpleSorting: SimpleSorting) => {
 		let newSorting: Sorting;
@@ -307,6 +303,7 @@ function ProjectsTable({
 						<button
 							className={"flex w-full project-table-button"}
 							onClick={() => setSorting("name")}
+							type="button"
 						>
 							{icon("name")}
 							<Typography variant="small" className="font-normal leading-none">
@@ -318,6 +315,7 @@ function ProjectsTable({
 						<button
 							className={"flex w-full project-table-button"}
 							onClick={() => setSorting("type")}
+							type="button"
 						>
 							{icon("type")}
 							<Typography variant="small" className="font-normal leading-none">
@@ -329,6 +327,7 @@ function ProjectsTable({
 						<button
 							className={"flex w-full project-table-button"}
 							onClick={() => setSorting("unity")}
+							type="button"
 						>
 							{icon("unity")}
 							<Typography variant="small" className="font-normal leading-none">
@@ -340,6 +339,7 @@ function ProjectsTable({
 						<button
 							className={"flex w-full project-table-button"}
 							onClick={() => setSorting("lastModified")}
+							type="button"
 						>
 							{icon("lastModified")}
 							<Typography variant="small" className="font-normal leading-none">
@@ -469,7 +469,7 @@ function ProjectRow({
 
 	const cellClass = "p-2.5";
 	const noGrowCellClass = `${cellClass} w-1`;
-	const typeIconClass = `w-5 h-5`;
+	const typeIconClass = "w-5 h-5";
 
 	const projectTypeKind = ProjectDisplayType[project.project_type] ?? "unknown";
 	const displayType = tc(`projects:type:${projectTypeKind}`);
@@ -500,6 +500,7 @@ function ProjectRow({
 	const doMigrateVpm = async (inPlace: boolean) => {
 		setDialogStatus({ type: "normal" });
 		try {
+			// TODO: Specify type
 			let migrateProjectPath;
 			if (inPlace) {
 				migrateProjectPath = project.path;
@@ -555,18 +556,18 @@ function ProjectRow({
 					/>
 				</Tooltip>
 			);
-		} else {
-			return (
-				<Button
-					{...props}
-					className={`disabled:pointer-events-auto ${props.className}`}
-					disabled={loading || props.disabled}
-					ref={ref}
-				/>
-			);
 		}
+		return (
+			<Button
+				{...props}
+				className={`disabled:pointer-events-auto ${props.className}`}
+				disabled={loading || props.disabled}
+				ref={ref}
+			/>
+		);
 	});
 
+	// TODO: Specify type
 	let manageButton;
 
 	switch (project.project_type) {
@@ -820,8 +821,9 @@ function ProjectViewHeader({
 				case "AlreadyAdded":
 					toastError(tt("projects:toast:project already exists"));
 					break;
-				default:
-					let _: never = result;
+				default: {
+					const _: never = result;
+				}
 			}
 		} catch (e) {
 			console.error("Error adding project", e);
@@ -952,8 +954,9 @@ function CreateProject({
 				case "Successful":
 					setProjectLocation(result.new_path);
 					break;
-				default:
+				default: {
 					const _exhaustiveCheck: never = result;
+				}
 			}
 		} catch (e) {
 			console.error(e);
@@ -980,9 +983,11 @@ function CreateProject({
 	};
 
 	const checking =
-		projectNameDebounced != projectName || projectNameCheckState === "checking";
+		projectNameDebounced !== projectName ||
+		projectNameCheckState === "checking";
 
 	let projectNameState: "Ok" | "warn" | "err";
+	// TODO: Specify type
 	let projectNameCheck;
 
 	switch (projectNameCheckState) {
@@ -1013,10 +1018,13 @@ function CreateProject({
 			projectNameState = "Ok";
 			break;
 		default:
-			const _exhaustiveCheck: never = projectNameCheckState;
+			{
+				const _exhaustiveCheck: never = projectNameCheckState;
+			}
 			projectNameState = "err";
 	}
 
+	// TODO: Specify type
 	let projectNameStateClass;
 	switch (projectNameState) {
 		case "Ok":
@@ -1031,6 +1039,7 @@ function CreateProject({
 
 	if (checking) projectNameCheck = <Spinner />;
 
+	// TODO: Specify type
 	let dialogBody;
 
 	switch (state) {
@@ -1116,13 +1125,13 @@ function CreateProject({
 			<DialogBody>{dialogBody}</DialogBody>
 			<DialogFooter>
 				<div className={"flex gap-2"}>
-					<Button onClick={close} disabled={state == "creating"}>
+					<Button onClick={close} disabled={state === "creating"}>
 						{tc("general:button:cancel")}
 					</Button>
 					<Button
 						onClick={createProject}
 						disabled={
-							state == "creating" || checking || projectNameState == "err"
+							state === "creating" || checking || projectNameState === "err"
 						}
 					>
 						{tc("projects:button:create")}

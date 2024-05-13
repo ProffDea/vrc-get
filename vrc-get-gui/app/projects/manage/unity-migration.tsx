@@ -1,4 +1,15 @@
-import React, { Fragment, useState } from "react";
+import {
+	type TauriUnityVersions,
+	environmentCopyProjectForMigration,
+	projectCallUnityForMigration,
+	projectMigrateProjectTo2022,
+} from "@/lib/bindings";
+import { callAsyncCommand } from "@/lib/call-async-command";
+import { tc, tt } from "@/lib/i18n";
+import { nop } from "@/lib/nop";
+import { shellOpen } from "@/lib/shellOpen";
+import { toastError, toastSuccess, toastThrownError } from "@/lib/toast";
+import { useUnitySelectorDialog } from "@/lib/use-unity-selector-dialog";
 import {
 	Button,
 	Dialog,
@@ -8,19 +19,8 @@ import {
 	Radio,
 	Typography,
 } from "@material-tailwind/react";
-import { nop } from "@/lib/nop";
-import { tc, tt } from "@/lib/i18n";
-import { toastError, toastSuccess, toastThrownError } from "@/lib/toast";
-import {
-	environmentCopyProjectForMigration,
-	projectCallUnityForMigration,
-	projectMigrateProjectTo2022,
-	TauriUnityVersions,
-} from "@/lib/bindings";
-import { callAsyncCommand } from "@/lib/call-async-command";
 import { useRouter } from "next/navigation";
-import { shellOpen } from "@/lib/shellOpen";
-import { useUnitySelectorDialog } from "@/lib/use-unity-selector-dialog";
+import React, { Fragment, useState } from "react";
 
 type UnityInstallation = [path: string, version: string, fromHub: boolean];
 
@@ -225,14 +225,14 @@ function useMigrationInternal({
 			await updateProjectPreUnityLaunch(migrateProjectPath);
 			setInstallStatus({ state: "finalizing", lines: [] });
 			let lineNumber = 0;
-			let [__, promise] = callAsyncCommand(
+			const [__, promise] = callAsyncCommand(
 				projectCallUnityForMigration,
 				[migrateProjectPath, unityPath],
 				(lineString) => {
 					setInstallStatus((prev) => {
 						if (prev.state != "finalizing") return prev;
 						lineNumber++;
-						let line: [number, string] = [lineNumber, lineString];
+						const line: [number, string] = [lineNumber, lineString];
 						if (prev.lines.length > 200) {
 							return { ...prev, lines: [...prev.lines.slice(1), line] };
 						} else {

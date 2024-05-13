@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
 import { Navbar } from "@material-tailwind/react";
+import type React from "react";
 
 export function VStack({
 	className,

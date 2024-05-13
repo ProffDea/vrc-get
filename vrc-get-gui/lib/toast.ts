@@ -16,6 +16,7 @@ export function toastError(message: string) {
 	toast.error(message);
 }
 
+// TODO: Specify type
 export function toastThrownError(error: any) {
 	switch (typeof error) {
 		case "string":

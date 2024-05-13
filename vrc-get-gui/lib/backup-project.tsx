@@ -1,4 +1,8 @@
-import React, { ReactNode, useState } from "react";
+import { type TauriProject, projectCreateBackup } from "@/lib/bindings";
+import { callAsyncCommand } from "@/lib/call-async-command";
+import { tc, tt } from "@/lib/i18n";
+import { nop } from "@/lib/nop";
+import { toastNormal, toastSuccess, toastThrownError } from "@/lib/toast";
 import {
 	Button,
 	Dialog,
@@ -6,11 +10,7 @@ import {
 	DialogFooter,
 	DialogHeader,
 } from "@material-tailwind/react";
-import { projectCreateBackup, TauriProject } from "@/lib/bindings";
-import { toastNormal, toastSuccess, toastThrownError } from "@/lib/toast";
-import { tc, tt } from "@/lib/i18n";
-import { nop } from "@/lib/nop";
-import { callAsyncCommand } from "@/lib/call-async-command";
+import React, { type ReactNode, useState } from "react";
 
 // string if remove project by path
 type Project =
@@ -48,7 +48,7 @@ export function useBackupProjectModal(_: Params = {}): Result {
 			);
 			setState({ type: "backing-up", cancel });
 			const channel = await promise;
-			if (channel == "cancelled") {
+			if (channel === "cancelled") {
 				toastNormal(tt("projects:toast:backup canceled"));
 			} else {
 				toastSuccess(tt("projects:toast:backup succeeded"));
@@ -79,8 +79,9 @@ export function useBackupProjectModal(_: Params = {}): Result {
 				</Dialog>
 			);
 			break;
-		default:
-			let _: never = state;
+		default: {
+			const _: never = state;
+		}
 	}
 
 	return { startBackup, dialog };

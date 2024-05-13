@@ -1,9 +1,8 @@
 "use client";
 
-import { Card, Typography } from "@material-tailwind/react";
-import Link from "next/link";
-import { Licenses } from "@/lib/licenses";
+import type { Licenses } from "@/lib/licenses";
 import { shellOpen } from "@/lib/shellOpen";
+import { Card, Typography } from "@material-tailwind/react";
 
 export default function RenderPage({
 	licenses,
@@ -28,15 +27,16 @@ export default function RenderPage({
 			</Card>
 
 			{licenses.map((license, idx) => (
+				// TODO: Avoid using the index of an array as key property in an element.
 				<Card className={"m-4 p-4"} key={idx}>
 					<Typography as={"h3"}>{license.name}</Typography>
 					<Typography as={"h4"}>Used by:</Typography>
 					<ul className={"ml-2"}>
 						{license.packages.map((pkg) => (
 							<li key={`${pkg.name}@${pkg.version}`}>
-								<a onClick={() => shellOpen(pkg.url)}>
+								<button onClick={() => shellOpen(pkg.url)} type="button">
 									{pkg.name} ({pkg.version})
-								</a>
+								</button>
 							</li>
 						))}
 					</ul>

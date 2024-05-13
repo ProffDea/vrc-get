@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { tc } from "@/lib/i18n";
+import { nop } from "@/lib/nop";
 import {
 	Button,
 	Dialog,
@@ -8,8 +9,7 @@ import {
 	Radio,
 	Typography,
 } from "@material-tailwind/react";
-import { nop } from "@/lib/nop";
-import { tc } from "@/lib/i18n";
+import React, { useState } from "react";
 
 type UnityInstallation = [path: string, version: string, fromHub: boolean];
 
@@ -46,25 +46,28 @@ export function useUnitySelectorDialog(): ResultUnitySelector {
 		case "normal":
 			break;
 		case "selecting":
-			const resolveWrapper = (unityPath: string | null) => {
-				setInstallStatus({ state: "normal" });
-				installStatus.resolve(unityPath);
-			};
-			dialog = (
-				<Dialog open handler={nop} className={"whitespace-normal"}>
-					<DialogHeader>
-						{tc("projects:manage:dialog:select unity header")}
-					</DialogHeader>
-					<SelectUnityVersionDialog
-						unityVersions={installStatus.unityVersions}
-						cancel={() => resolveWrapper(null)}
-						onSelect={(unityPath) => resolveWrapper(unityPath)}
-					/>
-				</Dialog>
-			);
+			{
+				const resolveWrapper = (unityPath: string | null) => {
+					setInstallStatus({ state: "normal" });
+					installStatus.resolve(unityPath);
+				};
+				dialog = (
+					<Dialog open handler={nop} className={"whitespace-normal"}>
+						<DialogHeader>
+							{tc("projects:manage:dialog:select unity header")}
+						</DialogHeader>
+						<SelectUnityVersionDialog
+							unityVersions={installStatus.unityVersions}
+							cancel={() => resolveWrapper(null)}
+							onSelect={(unityPath) => resolveWrapper(unityPath)}
+						/>
+					</Dialog>
+				);
+			}
 			break;
-		default:
+		default: {
 			const _: never = installStatus;
+		}
 	}
 
 	return { dialog, select };
@@ -98,7 +101,7 @@ function SelectUnityVersionDialog({
 						key={path}
 						name={name}
 						label={`${version} (${path})`}
-						checked={selectedUnityPath == path}
+						checked={selectedUnityPath === path}
 						onChange={() => setSelectedUnityPath(path)}
 					/>
 				))}

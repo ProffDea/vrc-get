@@ -1,12 +1,12 @@
 "use client";
 
-import { Card, Typography } from "@material-tailwind/react";
-import { HNavBar, VStack } from "@/components/layout";
-import React, { useEffect } from "react";
-import { LogEntry, utilGetLogEntries } from "@/lib/bindings";
 import { notoSansMono } from "@/app/fonts";
-import { listen } from "@tauri-apps/api/event";
+import { HNavBar, VStack } from "@/components/layout";
+import { type LogEntry, utilGetLogEntries } from "@/lib/bindings";
 import { tc } from "@/lib/i18n";
+import { Card, Typography } from "@material-tailwind/react";
+import { listen } from "@tauri-apps/api/event";
+import React, { useEffect } from "react";
 
 export default function Page() {
 	const [logEntries, setLogEntries] = React.useState<LogEntry[]>([]);
