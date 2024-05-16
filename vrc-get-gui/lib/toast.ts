@@ -1,4 +1,4 @@
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 
 export function toastNormal(message: string) {
 	toast(message, {
@@ -16,14 +16,15 @@ export function toastError(message: string) {
 	toast.error(message);
 }
 
+// TODO: Specify type
 export function toastThrownError(error: any) {
 	switch (typeof error) {
-		case 'string':
+		case "string":
 			toastError(error);
 			break;
-		case 'object':
-			if ('type' in error && error.type === "Unrecoverable") return; // should be handled by log toast
-			if (error instanceof Error || 'message' in error) {
+		case "object":
+			if ("type" in error && error.type === "Unrecoverable") return; // should be handled by log toast
+			if (error instanceof Error || "message" in error) {
 				toastError(error.message);
 			} else {
 				toastError(JSON.stringify(error));

@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
-import {ToastContainer} from 'react-toastify';
-import {useEffect} from "react";
-import {listen} from "@tauri-apps/api/event";
-import {environmentLanguage, LogEntry} from "@/lib/bindings";
+import { type LogEntry, environmentLanguage } from "@/lib/bindings";
 import i18next from "@/lib/i18n";
-import {I18nextProvider} from "react-i18next";
-import {toastError} from "@/lib/toast";
-import {ThemeProvider} from "@material-tailwind/react";
+import { toastError } from "@/lib/toast";
+import { ThemeProvider } from "@material-tailwind/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { listen } from "@tauri-apps/api/event";
+import { useEffect } from "react";
+import { I18nextProvider } from "react-i18next";
+import { ToastContainer } from "react-toastify";
 
 const queryClient = new QueryClient();
 
-export function Providers({children}: { children: React.ReactNode }) {
+export function Providers({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
 		let unlisten: (() => void) | undefined = undefined;
 		let unlistened = false;
@@ -37,7 +37,7 @@ export function Providers({children}: { children: React.ReactNode }) {
 	}, []);
 
 	useEffect(() => {
-		environmentLanguage().then((lang) => i18next.changeLanguage(lang))
+		environmentLanguage().then((lang) => i18next.changeLanguage(lang));
 	}, []);
 
 	return (
@@ -57,13 +57,15 @@ export function Providers({children}: { children: React.ReactNode }) {
 			/>
 			<QueryClientProvider client={queryClient}>
 				<I18nextProvider i18n={i18next}>
-					<ThemeProvider value={{
-						Typography: {
-							styles: {
-								font: 'normal'
-							}
-						}
-					}}>
+					<ThemeProvider
+						value={{
+							Typography: {
+								styles: {
+									font: "normal",
+								},
+							},
+						}}
+					>
 						{children as any}
 					</ThemeProvider>
 				</I18nextProvider>

@@ -2,21 +2,17 @@
 resolver = "2"
 
 members = [
-    "build-check-static-link",
-    "build-updater-json",
-    "vrc-get",
-    "vrc-get-gui",
-    "vrc-get-litedb",
-    "vrc-get-vpm",
+  "build-check-static-link",
+  "build-updater-json",
+  "vrc-get",
+  "vrc-get-gui",
+  "vrc-get-litedb",
+  "vrc-get-vpm",
 ]
 
 # "vrc-get-gui" is excluded since "vrc-get-gui" requires complex tauri configuration
 # "build-check-static-link" is excluded since "build-check-static-link" is not a part of the main project, a utility for project
-default-members = [
-    "vrc-get",
-    "vrc-get-litedb",
-    "vrc-get-vpm",
-]
+default-members = ["vrc-get", "vrc-get-litedb", "vrc-get-vpm"]
 
 [workspace.package]
 edition = "2021"

@@ -1,49 +1,58 @@
 // based on https://github.com/creativetimofficial/material-tailwind/blob/main/packages/material-tailwind-react/src/components/Select/index.tsx#L298
 
-import React, {createContext, useContext, useState} from "react";
-import {Menu, MenuHandler, MenuItem, MenuList, useTheme} from "@material-tailwind/react";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import {
+	Menu,
+	MenuHandler,
+	MenuItem,
+	MenuList,
+	useTheme,
+} from "@material-tailwind/react";
 import findMatch from "@material-tailwind/react/utils/findMatch";
 import objectsToString from "@material-tailwind/react/utils/objectsToString";
-import {twMerge} from "tailwind-merge";
 import classnames from "classnames";
-import {ChevronDownIcon} from "@heroicons/react/24/solid";
+import React, { createContext, useContext, useState } from "react";
+import { twMerge } from "tailwind-merge";
 
 interface SelectContext {
+	// TODO: Specify type
 	onClick(value: any): void;
 }
 
-export const SelectContext = createContext<SelectContext | undefined>(undefined);
+export const SelectContext = createContext<SelectContext | undefined>(
+	undefined,
+);
 
-export function VGSelect(
-	{
-		children,
-		disabled,
-		value,
-		className,
-		menuClassName,
-		onChange,
-	}: {
-		children: React.ReactNode,
-		disabled?: boolean,
-		value?: React.ReactNode,
-		className?: string,
-		menuClassName?: string,
-		onChange?: (value: any) => void,
-	}
-) {
+export function VGSelect({
+	children,
+	disabled,
+	value,
+	className,
+	menuClassName,
+	onChange,
+}: {
+	children: React.ReactNode;
+	disabled?: boolean;
+	value?: React.ReactNode;
+	className?: string;
+	menuClassName?: string;
+	// TODO: Specify type
+	onChange?: (value: any) => void;
+}) {
 	const [state, setState] = useState<string>("close");
 	const [open, setOpen] = React.useState(false);
 
-	const {select} = useTheme();
-	const {defaultProps, valid, styles} = select;
-	const {base, variants} = styles;
+	const { select } = useTheme();
+	const { defaultProps, valid, styles } = select;
+	const { base, variants } = styles;
 
 	const contextValue: SelectContext = {
+		// TODO: Specify type
 		onClick(value: any) {
 			onChange?.(value);
 			setOpen(false);
-		}
-	}
+		},
+	};
 
 	const size = defaultProps.size;
 
@@ -66,7 +75,8 @@ export function VGSelect(
 	const arrowClasses = classnames(objectsToString(base.arrow.initial), {
 		[objectsToString(base.arrow.active)]: open,
 	});
-	const buttonContentClasses = "absolute top-2/4 -translate-y-2/4 left-3 pt-0.5";
+	const buttonContentClasses =
+		"absolute top-2/4 -translate-y-2/4 left-3 pt-0.5";
 
 	React.useEffect(() => {
 		if (open) {
@@ -74,17 +84,17 @@ export function VGSelect(
 		} else {
 			setState("close");
 		}
-	}, [open, value]);
+	}, [open]);
 
 	return (
 		<SelectContext.Provider value={contextValue}>
 			<Menu open={open} handler={() => setOpen(!open)}>
 				<div className={containerClasses}>
 					<MenuHandler>
-						<button className={selectClasses} disabled={disabled}>
+						<button className={selectClasses} disabled={disabled} type="button">
 							<span className={buttonContentClasses}>{value}</span>
 							<div className={arrowClasses}>
-								<ChevronDownIcon className="size-3"/>
+								<ChevronDownIcon className="size-3" />
 							</div>
 						</button>
 					</MenuHandler>
@@ -94,10 +104,10 @@ export function VGSelect(
 				</MenuList>
 			</Menu>
 		</SelectContext.Provider>
-	)
+	);
 }
 
-export const VGOption = React.forwardRef(VGOptionImpl)
+export const VGOption = React.forwardRef(VGOptionImpl);
 
 function VGOptionImpl(
 	{
@@ -105,14 +115,21 @@ function VGOptionImpl(
 		value,
 		disabled,
 	}: {
-		children: React.ReactNode,
-		value: any,
-		disabled?: boolean,
+		children: React.ReactNode;
+		// TODO: Specify type
+		value: any;
+		disabled?: boolean;
 	},
-	ref: React.Ref<HTMLButtonElement>
+	ref: React.Ref<HTMLButtonElement>,
 ) {
 	const contextValue = useContext(SelectContext);
 	return (
-		<MenuItem ref={ref} disabled={disabled} onClick={() => contextValue?.onClick(value)}>{children}</MenuItem>
-	)
+		<MenuItem
+			ref={ref}
+			disabled={disabled}
+			onClick={() => contextValue?.onClick(value)}
+		>
+			{children}
+		</MenuItem>
+	);
 }

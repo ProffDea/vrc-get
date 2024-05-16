@@ -1,5 +1,25 @@
-"use client"
+"use client";
 
+import { InputNoLabel } from "@/components/InputNoLabel";
+import { HNavBar, VStack } from "@/components/layout";
+import {
+	type TauriRemoteRepositoryInfo,
+	type TauriUserRepository,
+	environmentAddRepository,
+	environmentDownloadRepository,
+	environmentHideRepository,
+	environmentRemoveRepository,
+	environmentRepositoriesInfo,
+	environmentShowRepository,
+} from "@/lib/bindings";
+import { tc, tt } from "@/lib/i18n";
+import { nop } from "@/lib/nop";
+import { toastError, toastSuccess, toastThrownError } from "@/lib/toast";
+import {
+	MinusCircleIcon,
+	PlusCircleIcon,
+	XCircleIcon,
+} from "@heroicons/react/24/outline";
 import {
 	Button,
 	Card,
@@ -10,89 +30,89 @@ import {
 	DialogHeader,
 	IconButton,
 	Input,
-	List,
-	ListItem,
 	Tooltip,
-	Typography
+	Typography,
 } from "@material-tailwind/react";
-import {useQuery} from "@tanstack/react-query";
-import {
-	environmentAddRepository,
-	environmentDownloadRepository,
-	environmentHideRepository,
-	environmentRemoveRepository,
-	environmentRepositoriesInfo,
-	environmentShowRepository,
-	TauriRemoteRepositoryInfo,
-	TauriUserRepository
-} from "@/lib/bindings";
-import {HNavBar, VStack} from "@/components/layout";
-import React, {Suspense, useMemo, useState} from "react";
-import {MinusCircleIcon, PlusCircleIcon, XCircleIcon} from "@heroicons/react/24/outline";
-import {nop} from "@/lib/nop";
-import {toastError, toastSuccess, toastThrownError} from "@/lib/toast";
-import {tc, tt} from "@/lib/i18n";
-import {InputNoLabel} from "@/components/InputNoLabel";
-import {loadManifestWithRetries} from "next/dist/server/load-components";
+import { useQuery } from "@tanstack/react-query";
+import React, { Suspense, useMemo, useState } from "react";
 
-export default function Page(props: {}) {
-	return <Suspense><PageBody {...props}/></Suspense>
+// biome-ignore lint/suspicious/noExplicitAny: unknown
+export default function Page(props: any) {
+	return (
+		<Suspense>
+			<PageBody {...props} />
+		</Suspense>
+	);
 }
 
-type State = {
-	type: 'normal',
-} | {
-	type: 'enteringRepositoryInfo',
-} | {
-	type: 'loadingRepository',
-} | {
-	type: 'duplicated',
-} | {
-	type: 'confirming',
-	repo: TauriRemoteRepositoryInfo,
-	url: string,
-	headers: { [key: string]: string },
-}
+type State =
+	| {
+			type: "normal";
+	  }
+	| {
+			type: "enteringRepositoryInfo";
+	  }
+	| {
+			type: "loadingRepository";
+	  }
+	| {
+			type: "duplicated";
+	  }
+	| {
+			type: "confirming";
+			repo: TauriRemoteRepositoryInfo;
+			url: string;
+			headers: { [key: string]: string };
+	  };
 
 function PageBody() {
-	const [state, setState] = useState<State>({type: 'normal'});
+	const [state, setState] = useState<State>({ type: "normal" });
 
 	const result = useQuery({
 		queryKey: ["environmentRepositoriesInfo"],
 		queryFn: environmentRepositoriesInfo,
-	})
+	});
 
-	const hiddenUserRepos = useMemo(() => new Set(result.data?.hidden_user_repositories), [result]);
+	const hiddenUserRepos = useMemo(
+		() => new Set(result.data?.hidden_user_repositories),
+		[result],
+	);
 
 	function cancel() {
-		setState({type: 'normal'});
+		setState({ type: "normal" });
 	}
 
-	async function addRepository(url: string, headers: { [key: string]: string }) {
+	async function addRepository(
+		url: string,
+		headers: { [key: string]: string },
+	) {
 		try {
-			setState({type: 'loadingRepository'});
+			setState({ type: "loadingRepository" });
 			const info = await environmentDownloadRepository(url, headers);
 			switch (info.type) {
 				case "BadUrl":
 					toastError(tt("vpm repositories:toast:invalid url"));
-					setState({type: 'normal'});
+					setState({ type: "normal" });
 					return;
 				case "DownloadError":
-					toastError(tt("vpm repositories:toast:load failed", {message: info.message}));
-					setState({type: 'normal'});
+					toastError(
+						tt("vpm repositories:toast:load failed", { message: info.message }),
+					);
+					setState({ type: "normal" });
 					return;
 				case "Duplicated":
-					setState({type: 'duplicated'});
+					setState({ type: "duplicated" });
 					return;
 				case "Success":
 					break;
-				default:
+				default: {
 					const _exhaustiveCheck: never = info;
+				}
 			}
-			setState({type: 'confirming', repo: info.value, url, headers})
+			setState({ type: "confirming", repo: info.value, url, headers });
 		} catch (e) {
 			toastThrownError(e);
-			setState({type: 'normal'});
+			setState({ type: "normal" });
 		}
 	}
 
@@ -105,43 +125,62 @@ function PageBody() {
 		}
 	}
 
+	// TODO: Specify type
 	let dialogBody;
 	switch (state.type) {
 		case "normal":
 			dialogBody = null;
 			break;
 		case "enteringRepositoryInfo":
-			dialogBody = <EnteringRepositoryInfo
-				cancel={cancel}
-				addRepository={(url, headers) => addRepository(url, headers)}
-			/>;
+			dialogBody = (
+				<EnteringRepositoryInfo
+					cancel={cancel}
+					addRepository={(url, headers) => addRepository(url, headers)}
+				/>
+			);
 			break;
 		case "loadingRepository":
-			dialogBody = <LoadingRepository cancel={cancel}/>;
+			dialogBody = <LoadingRepository cancel={cancel} />;
 			break;
 		case "duplicated":
-			dialogBody = <Duplicated cancel={cancel}/>;
-			break
-		case "confirming":
-			const doAddRepository = async () => {
-				try {
-					await environmentAddRepository(state.url, state.headers);
-					setState({type: 'normal'});
-					toastSuccess(tt("vpm repositories:toast:repository added"));
-					// noinspection ES6MissingAwait
-					result.refetch();
-				} catch (e) {
-					toastThrownError(e);
-					setState({type: 'normal'});
-				}
-			}
-			dialogBody = <Confirming repo={state.repo} headers={state.headers} cancel={cancel} add={doAddRepository}/>;
+			dialogBody = <Duplicated cancel={cancel} />;
 			break;
-		default:
+		case "confirming":
+			{
+				const doAddRepository = async () => {
+					try {
+						await environmentAddRepository(state.url, state.headers);
+						setState({ type: "normal" });
+						toastSuccess(tt("vpm repositories:toast:repository added"));
+						// noinspection ES6MissingAwait
+						result.refetch();
+					} catch (e) {
+						toastThrownError(e);
+						setState({ type: "normal" });
+					}
+				};
+				dialogBody = (
+					<Confirming
+						repo={state.repo}
+						headers={state.headers}
+						cancel={cancel}
+						add={doAddRepository}
+					/>
+				);
+			}
+			break;
+		default: {
 			const _exhaustiveCheck: never = state;
+		}
 	}
-	const dialog = dialogBody ?
-		<Dialog handler={nop} open><DialogHeader>{tc("vpm repositories:button:add repository")}</DialogHeader>{dialogBody}</Dialog> : null;
+	const dialog = dialogBody ? (
+		<Dialog handler={nop} open>
+			<DialogHeader>
+				{tc("vpm repositories:button:add repository")}
+			</DialogHeader>
+			{dialogBody}
+		</Dialog>
+	) : null;
 
 	return (
 		<VStack className={"p-4 overflow-y-auto"}>
@@ -149,7 +188,9 @@ function PageBody() {
 				<Typography className="cursor-pointer py-1.5 font-bold flex-grow-0">
 					{tc("vpm repositories:community repositories")}
 				</Typography>
-				<Button onClick={() => setState({type: 'enteringRepositoryInfo'})}>{tc("vpm repositories:button:add repository")}</Button>
+				<Button onClick={() => setState({ type: "enteringRepositoryInfo" })}>
+					{tc("vpm repositories:button:add repository")}
+				</Button>
 			</HNavBar>
 			<main className="flex-shrink flex-grow overflow-hidden flex">
 				<Card className="w-full overflow-x-auto overflow-y-scroll shadow-none">
@@ -166,19 +207,17 @@ function PageBody() {
 	);
 }
 
-function RepositoryTable(
-	{
-		userRepos,
-		hiddenUserRepos,
-		removeRepository,
-		refetch,
-	}: {
-		userRepos: TauriUserRepository[],
-		hiddenUserRepos: Set<string>,
-		removeRepository: (id: string) => void,
-		refetch: () => void,
-	}
-) {
+function RepositoryTable({
+	userRepos,
+	hiddenUserRepos,
+	removeRepository,
+	refetch,
+}: {
+	userRepos: TauriUserRepository[];
+	hiddenUserRepos: Set<string>;
+	removeRepository: (id: string) => void;
+	refetch: () => void;
+}) {
 	const TABLE_HEAD = [
 		"", // checkbox
 		"general:name",
@@ -189,44 +228,48 @@ function RepositoryTable(
 	return (
 		<table className="relative table-auto text-left">
 			<thead>
-			<tr>
-				{TABLE_HEAD.map((head, index) => (
-					<th key={index}
-							className={`sticky top-0 z-10 border-b border-blue-gray-100 bg-blue-gray-50 p-2.5`}>
-						<Typography variant="small" className="font-normal leading-none">{tc(head)}</Typography>
-					</th>
-				))}
-			</tr>
+				<tr>
+					{TABLE_HEAD.map((head, index) => (
+						<th
+							// TODO: Avoid using the index of an array as key property in an element.
+							key={index}
+							className={
+								"sticky top-0 z-10 border-b border-blue-gray-100 bg-blue-gray-50 p-2.5"
+							}
+						>
+							<Typography variant="small" className="font-normal leading-none">
+								{tc(head)}
+							</Typography>
+						</th>
+					))}
+				</tr>
 			</thead>
 			<tbody>
-			{
-				userRepos.map((repo) =>
+				{userRepos.map((repo) => (
 					<RepositoryRow
 						key={repo.id}
 						repo={repo}
 						hiddenUserRepos={hiddenUserRepos}
 						remove={() => removeRepository(repo.id)}
 						refetch={refetch}
-					/>)
-			}
+					/>
+				))}
 			</tbody>
 		</table>
 	);
 }
 
-function RepositoryRow(
-	{
-		repo,
-		hiddenUserRepos,
-		remove,
-		refetch,
-	}: {
-		repo: TauriUserRepository,
-		hiddenUserRepos: Set<string>,
-		remove: () => void,
-		refetch: () => void,
-	}
-) {
+function RepositoryRow({
+	repo,
+	hiddenUserRepos,
+	remove,
+	refetch,
+}: {
+	repo: TauriUserRepository;
+	hiddenUserRepos: Set<string>;
+	remove: () => void;
+	refetch: () => void;
+}) {
 	const cellClass = "p-2.5";
 	const id = `repository-${repo.id}`;
 
@@ -239,90 +282,110 @@ function RepositoryRow(
 		} else {
 			environmentShowRepository(repo.id).then(refetch);
 		}
-	}
+	};
 
+	// TODO: Specify type
 	let dialog;
 	if (removeDialogOpen) {
-		dialog = <Dialog handler={nop} open>
-			<DialogHeader>{tc("vpm repositories:remove repository")}</DialogHeader>
-			<DialogBody>
-				<Typography
-					className={"whitespace-normal font-normal"}>{tc("vpm repositories:dialog:confirm remove description", {name: repo.display_name})}</Typography>
-			</DialogBody>
-			<DialogFooter>
-				<Button onClick={() => setRemoveDialogOpen(false)}>{tc("general:button:cancel")}</Button>
-				<Button onClick={() => {
-					remove();
-					setRemoveDialogOpen(false);
-				}} className={"ml-2"}>{tc("vpm repositories:remove repository")}</Button>
-			</DialogFooter>
-		</Dialog>;
+		dialog = (
+			<Dialog handler={nop} open>
+				<DialogHeader>{tc("vpm repositories:remove repository")}</DialogHeader>
+				<DialogBody>
+					<Typography className={"whitespace-normal font-normal"}>
+						{tc("vpm repositories:dialog:confirm remove description", {
+							name: repo.display_name,
+						})}
+					</Typography>
+				</DialogBody>
+				<DialogFooter>
+					<Button onClick={() => setRemoveDialogOpen(false)}>
+						{tc("general:button:cancel")}
+					</Button>
+					<Button
+						onClick={() => {
+							remove();
+							setRemoveDialogOpen(false);
+						}}
+						className={"ml-2"}
+					>
+						{tc("vpm repositories:remove repository")}
+					</Button>
+				</DialogFooter>
+			</Dialog>
+		);
 	}
 
 	return (
 		<tr className="even:bg-blue-gray-50/50">
 			<td className={cellClass}>
-				<Checkbox ripple={false} containerProps={{className: "p-0 rounded-none"}} id={id}
-									checked={selected} onChange={onChange}/>
+				<Checkbox
+					ripple={false}
+					containerProps={{ className: "p-0 rounded-none" }}
+					id={id}
+					checked={selected}
+					onChange={onChange}
+				/>
 			</td>
 			<td className={cellClass}>
 				<label htmlFor={id}>
-					<Typography className="font-normal">
-						{repo.display_name}
-					</Typography>
+					<Typography className="font-normal">{repo.display_name}</Typography>
 				</label>
 			</td>
 			<td className={cellClass}>
-				<Typography className="font-normal">
-					{repo.url}
-				</Typography>
+				<Typography className="font-normal">{repo.url}</Typography>
 			</td>
 			<td className={`${cellClass} w-0`}>
 				<Tooltip content={tc("vpm repositories:remove repository")}>
-					<IconButton onClick={() => setRemoveDialogOpen(true)} variant={"text"}>
-						<XCircleIcon className={"size-5 text-red-700"}/>
+					<IconButton
+						onClick={() => setRemoveDialogOpen(true)}
+						variant={"text"}
+					>
+						<XCircleIcon className={"size-5 text-red-700"} />
 					</IconButton>
 				</Tooltip>
 			</td>
 			{dialog}
 		</tr>
-	)
+	);
 }
 
 let globalHeaderId = 0;
 
-function EnteringRepositoryInfo(
-	{
-		cancel,
-		addRepository,
-	}: {
-		cancel: () => void,
-		addRepository: (url: string, headers: { [name: string]: string }) => void,
-	}
-) {
+function EnteringRepositoryInfo({
+	cancel,
+	addRepository,
+}: {
+	cancel: () => void;
+	addRepository: (url: string, headers: { [name: string]: string }) => void;
+}) {
 	const [url, setUrl] = useState("");
-	type Header = { name: string, value: string, id: number };
-	const [headerArray, setHeaderArray] = useState<Header[]>(() => [{
-		name: "",
-		value: "",
-		id: globalHeaderId++,
-	}]);
+	type Header = { name: string; value: string; id: number };
+	const [headerArray, setHeaderArray] = useState<Header[]>(() => [
+		{
+			name: "",
+			value: "",
+			id: globalHeaderId++,
+		},
+	]);
 
 	let foundHeaderNameError = false;
 	let foundHeaderValueError = false;
 	let foundDuplicateHeader = false;
 
-	let headerNameSet = new Set<string>();
+	const headerNameSet = new Set<string>();
 
-	for (let {name, value} of headerArray) {
-		let trimedName = name.trim();
-		let trimedValue = value.trim();
-		if (trimedName != "" || trimedValue != "") {
+	for (const { name, value } of headerArray) {
+		const trimedName = name.trim();
+		const trimedValue = value.trim();
+		if (trimedName !== "" || trimedValue !== "") {
 			// header (field) name is token (RFC 9110 section 5.1)
 			//   https://www.rfc-editor.org/rfc/rfc9110.html#name-field-names
 			// token is defined in 5.6.2
 			//   https://www.rfc-editor.org/rfc/rfc9110.html#name-tokens
-			if (trimedName == '' || !trimedName.match(/[!#$%&'*+\-.^_`|~0-9a-zA-Z]/)) {
+			if (
+				trimedName === "" ||
+				!trimedName.match(/[!#$%&'*+\-.^_`|~0-9a-zA-Z]/)
+			) {
 				foundHeaderNameError = true;
 			}
 
@@ -350,18 +413,22 @@ function EnteringRepositoryInfo(
 		}
 	}
 
-	const hasError = foundHeaderNameError || foundHeaderValueError || foundDuplicateHeader;
+	const hasError =
+		foundHeaderNameError || foundHeaderValueError || foundDuplicateHeader;
 
 	const addHeader = () => {
-		setHeaderArray(old => [...old, {
-			name: "",
-			value: "",
-			id: globalHeaderId++,
-		}]);
-	}
+		setHeaderArray((old) => [
+			...old,
+			{
+				name: "",
+				value: "",
+				id: globalHeaderId++,
+			},
+		]);
+	};
 
 	const removeHeader = (idx: number) => {
-		setHeaderArray(old => {
+		setHeaderArray((old) => {
 			const newArray = [...old];
 			newArray.splice(idx, 1);
 			if (newArray.length === 0) {
@@ -373,7 +440,7 @@ function EnteringRepositoryInfo(
 			}
 			return newArray;
 		});
-	}
+	};
 
 	const onAddRepository = () => {
 		const headers: { [name: string]: string } = {};
@@ -382,43 +449,53 @@ function EnteringRepositoryInfo(
 			headers[header.name.trim()] = header.value.trim();
 		}
 		addRepository(url, headers);
-	}
+	};
 
 	return (
 		<>
 			<DialogBody>
-				<Typography className={'font-normal'}>
+				<Typography className={"font-normal"}>
 					{tc("vpm repositories:dialog:enter repository info")}
 				</Typography>
-				<Input type={"vpm repositories:url"} label={"URL"} value={url} onChange={e => setUrl(e.target.value)}
-							 placeholder={"https://vpm.anatawa12.com/vpm.json"}></Input>
+				<Input
+					type={"vpm repositories:url"}
+					label={"URL"}
+					value={url}
+					onChange={(e) => setUrl(e.target.value)}
+					placeholder={"https://vpm.anatawa12.com/vpm.json"}
+				/>
 				<details>
-					<summary className={"font-bold"}>{tc("vpm repositories:dialog:headers")}</summary>
+					<summary className={"font-bold"}>
+						{tc("vpm repositories:dialog:headers")}
+					</summary>
 					<div className={"w-full max-h-[50vh] overflow-y-auto"}>
 						<table className={"w-full"}>
 							<thead>
-							<tr>
-								<th className={"sticky top-0 z-10 bg-white"}>{tc("vpm repositories:dialog:header name")}</th>
-								<th className={"sticky top-0 z-10 bg-white"}>{tc("vpm repositories:dialog:header value")}</th>
-								<th className={"sticky top-0 z-10 bg-white"}></th>
-							</tr>
+								<tr>
+									<th className={"sticky top-0 z-10 bg-white"}>
+										{tc("vpm repositories:dialog:header name")}
+									</th>
+									<th className={"sticky top-0 z-10 bg-white"}>
+										{tc("vpm repositories:dialog:header value")}
+									</th>
+									<th className={"sticky top-0 z-10 bg-white"}></th>
+								</tr>
 							</thead>
 							<tbody>
-							{
-								headerArray.map(({name, value, id}, idx) => (
+								{headerArray.map(({ name, value, id }, idx) => (
 									<tr key={id}>
 										<td>
 											<InputNoLabel
 												type={"text"}
 												value={name}
 												className={"w-96"}
-												onChange={e => {
-													setHeaderArray(old => {
+												onChange={(e) => {
+													setHeaderArray((old) => {
 														const newArray = [...old];
-														newArray[idx] = {...newArray[idx]};
+														newArray[idx] = { ...newArray[idx] };
 														newArray[idx].name = e.target.value;
 														return newArray;
-													})
+													});
 												}}
 											/>
 										</td>
@@ -426,60 +503,85 @@ function EnteringRepositoryInfo(
 											<InputNoLabel
 												type={"text"}
 												value={value}
-												onChange={e => {
-													setHeaderArray(old => {
+												onChange={(e) => {
+													setHeaderArray((old) => {
 														const newArray = [...old];
-														newArray[idx] = {...newArray[idx]};
+														newArray[idx] = { ...newArray[idx] };
 														newArray[idx].value = e.target.value;
 														return newArray;
-													})
+													});
 												}}
 											/>
 										</td>
 										<td className={"w-20"}>
-											<Tooltip content={tc("vpm repositories:tooltip:add header")} className={"z-[19999]"}>
+											<Tooltip
+												content={tc("vpm repositories:tooltip:add header")}
+												className={"z-[19999]"}
+											>
 												<IconButton variant={"text"} onClick={addHeader}>
-													<PlusCircleIcon color={"green"} className={"size-5"}/>
+													<PlusCircleIcon
+														color={"green"}
+														className={"size-5"}
+													/>
 												</IconButton>
 											</Tooltip>
-											<Tooltip content={tc("vpm repositories:tooltip:remove header")} className={"z-[19999]"}>
-												<IconButton variant={"text"} onClick={() => removeHeader(idx)}>
-													<MinusCircleIcon color={"red"} className={"size-5"}/>
+											<Tooltip
+												content={tc("vpm repositories:tooltip:remove header")}
+												className={"z-[19999]"}
+											>
+												<IconButton
+													variant={"text"}
+													onClick={() => removeHeader(idx)}
+												>
+													<MinusCircleIcon color={"red"} className={"size-5"} />
 												</IconButton>
 											</Tooltip>
 										</td>
 									</tr>
-								))
-							}
+								))}
 							</tbody>
 						</table>
 					</div>
 				</details>
-				{foundHeaderNameError && <Typography className={"text-red-700"}>{tc("vpm repositories:hint:invalid header names")}</Typography>}
-				{foundHeaderValueError && <Typography className={"text-red-700"}>{tc("vpm repositories:hint:invalid header values")}</Typography>}
-				{foundDuplicateHeader && <Typography className={"text-red-700"}>{tc("vpm repositories:hint:duplicate headers")}</Typography>}
+				{foundHeaderNameError && (
+					<Typography className={"text-red-700"}>
+						{tc("vpm repositories:hint:invalid header names")}
+					</Typography>
+				)}
+				{foundHeaderValueError && (
+					<Typography className={"text-red-700"}>
+						{tc("vpm repositories:hint:invalid header values")}
+					</Typography>
+				)}
+				{foundDuplicateHeader && (
+					<Typography className={"text-red-700"}>
+						{tc("vpm repositories:hint:duplicate headers")}
+					</Typography>
+				)}
 			</DialogBody>
 			<DialogFooter>
 				<Button onClick={cancel}>{tc("general:button:cancel")}</Button>
-				<Button onClick={onAddRepository} className={"ml-2"} disabled={hasError}>{tc("vpm repositories:button:add repository")}</Button>
+				<Button
+					onClick={onAddRepository}
+					className={"ml-2"}
+					disabled={hasError}
+				>
+					{tc("vpm repositories:button:add repository")}
+				</Button>
 			</DialogFooter>
 		</>
 	);
 }
 
-function LoadingRepository(
-	{
-		cancel,
-	}: {
-		cancel: () => void,
-	}
-) {
+function LoadingRepository({
+	cancel,
+}: {
+	cancel: () => void;
+}) {
 	return (
 		<>
 			<DialogBody>
-				<Typography>
-					{tc("vpm repositories:dialog:downloading...")}
-				</Typography>
+				<Typography>{tc("vpm repositories:dialog:downloading...")}</Typography>
 			</DialogBody>
 			<DialogFooter>
 				<Button onClick={cancel}>{tc("general:button:cancel")}</Button>
@@ -488,19 +590,15 @@ function LoadingRepository(
 	);
 }
 
-function Duplicated(
-	{
-		cancel,
-	}: {
-		cancel: () => void,
-	}
-) {
+function Duplicated({
+	cancel,
+}: {
+	cancel: () => void;
+}) {
 	return (
 		<>
 			<DialogBody>
-				<Typography>
-					{tc("vpm repositories:dialog:already added")}
-				</Typography>
+				<Typography>{tc("vpm repositories:dialog:already added")}</Typography>
 			</DialogBody>
 			<DialogFooter>
 				<Button onClick={cancel}>{tc("general:button:ok")}</Button>
@@ -509,48 +607,56 @@ function Duplicated(
 	);
 }
 
-function Confirming(
-	{
-		repo,
-		cancel,
-		add,
-		headers,
-	}: {
-		repo: TauriRemoteRepositoryInfo,
-		headers: { [key: string]: string },
-		cancel: () => void,
-		add: () => void,
-	}
-) {
+function Confirming({
+	repo,
+	cancel,
+	add,
+	headers,
+}: {
+	repo: TauriRemoteRepositoryInfo;
+	headers: { [key: string]: string };
+	cancel: () => void;
+	add: () => void;
+}) {
 	return (
 		<>
 			<DialogBody className={"max-h-[50vh] overflow-y-auto font-normal"}>
-				<Typography className={"font-normal"}>{tc("vpm repositories:dialog:name", {name: repo.display_name})}</Typography>
-				<Typography className={"font-normal"}>{tc("vpm repositories:dialog:url", {url: repo.url})}</Typography>
+				<Typography className={"font-normal"}>
+					{tc("vpm repositories:dialog:name", { name: repo.display_name })}
+				</Typography>
+				<Typography className={"font-normal"}>
+					{tc("vpm repositories:dialog:url", { url: repo.url })}
+				</Typography>
 				{Object.keys(headers).length > 0 && (
 					<>
-						<Typography className={"font-normal"}>{tc("vpm repositories:dialog:headers")}</Typography>
+						<Typography className={"font-normal"}>
+							{tc("vpm repositories:dialog:headers")}
+						</Typography>
 						<ul className={"list-disc pl-6"}>
-							{
-								Object.entries(headers).map(([key, value], idx) => (
-									<li key={idx}>{key}: {value}</li>
-								))
-							}
+							{Object.entries(headers).map(([key, value], idx) => (
+								// TODO: Avoid using the index of an array as key property in an element.
+								<li key={idx}>
+									{key}: {value}
+								</li>
+							))}
 						</ul>
 					</>
 				)}
-				<Typography className={"font-normal"}>{tc("vpm repositories:dialog:packages")}</Typography>
+				<Typography className={"font-normal"}>
+					{tc("vpm repositories:dialog:packages")}
+				</Typography>
 				<ul className={"list-disc pl-6"}>
-					{
-						repo.packages.map((info, idx) => (
-							<li key={idx}>{info.display_name ?? info.name}</li>
-						))
-					}
+					{repo.packages.map((info, idx) => (
+						// TODO: Avoid using the index of an array as key property in an element.
+						<li key={idx}>{info.display_name ?? info.name}</li>
+					))}
 				</ul>
 			</DialogBody>
 			<DialogFooter>
 				<Button onClick={cancel}>{tc("general:button:cancel")}</Button>
-				<Button onClick={add} className={"ml-2"}>{tc("vpm repositories:button:add repository")}</Button>
+				<Button onClick={add} className={"ml-2"}>
+					{tc("vpm repositories:button:add repository")}
+				</Button>
 			</DialogFooter>
 		</>
 	);

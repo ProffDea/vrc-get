@@ -1,9 +1,9 @@
-import type {Metadata} from "next";
-import {Noto_Sans_JP} from "next/font/google";
+import type { Metadata } from "next";
+import { Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
-import 'react-toastify/dist/ReactToastify.css';
-import {SideBar} from "@/components/SideBar";
-import {Providers} from "@/components/providers";
+import "react-toastify/dist/ReactToastify.css";
+import { SideBar } from "@/components/SideBar";
+import { Providers } from "@/components/providers";
 
 const notoSansJP = Noto_Sans_JP({
 	subsets: ["latin"],
@@ -15,20 +15,22 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({
-																		 children,
-																	 }: Readonly<{
+	children,
+}: Readonly<{
 	children: React.ReactNode;
 }>) {
 	return (
 		<html lang="en">
-		<body className={`${notoSansJP.className} w-screen h-screen flex flex-row overflow-hidden whitespace-nowrap`}>
-		<Providers>
-			<SideBar className={"flex-grow-0 overflow-auto"}/>
-			<div className={"h-screen flex-grow overflow-auto flex"}>
-				{children}
-			</div>
-		</Providers>
-		</body>
+			<body
+				className={`${notoSansJP.className} w-screen h-screen flex flex-row overflow-hidden whitespace-nowrap`}
+			>
+				<Providers>
+					<SideBar className={"flex-grow-0 overflow-auto"} />
+					<div className={"h-screen flex-grow overflow-auto flex"}>
+						{children}
+					</div>
+				</Providers>
+			</body>
 		</html>
 	);
 }

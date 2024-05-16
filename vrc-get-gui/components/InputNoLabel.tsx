@@ -1,9 +1,7 @@
-import {Input} from "@material-tailwind/react";
-import React, {ComponentProps} from "react";
+import { Input } from "@material-tailwind/react";
+import React, { type ComponentProps } from "react";
 
-export function InputNoLabel(
-	props: ComponentProps<typeof Input>
-) {
+export function InputNoLabel(props: ComponentProps<typeof Input>) {
 	return (
 		<Input
 			{...props}
@@ -14,8 +12,8 @@ export function InputNoLabel(
 			className={`!border-t-blue-gray-300 placeholder:text-blue-gray-300 focus:!border-blue-gray-300 ${props.className}`}
 			labelProps={{
 				...props.labelProps,
-				className: `before:content-none after:content-none ${props.labelProps?.className}`
+				className: `before:content-none after:content-none ${props.labelProps?.className}`,
 			}}
 		/>
-	)
+	);
 }
