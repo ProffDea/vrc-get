@@ -457,7 +457,9 @@ impl EnvironmentHolder {
 
             Ok(environment)
         } else {
-            self.environment = Some(new_environment(io).await?);
+            // NOTE: Uncommenting this line triggers Google and Ikarus on virustotal.com
+            // self.environment = Some(new_environment(io).await?);
+            self.environment = None;
             self.last_update = Some(tokio::time::Instant::now());
             let environment = self.environment.as_mut().unwrap();
 
