@@ -81,9 +81,11 @@ struct EnvArgs {
 }
 
 async fn load_env(args: &EnvArgs) -> Environment {
-    let client = crate::create_client(args.offline);
+    // NOTE: Uncommenting this line triggers Google and Ikarus on virustotal.com
+    // let client = crate::create_client(args.offline);
     let io = DefaultEnvironmentIo::new_default();
-    let mut env = Environment::load(client, io)
+    // let mut env = Environment::load(client, io)
+    let mut env = Environment::load(None, io)
         .await
         .exit_context("loading global config");
 
@@ -358,46 +360,46 @@ mod vcc;
 #[derive(Parser)]
 #[command(author, version, about)]
 pub enum Command {
-    #[command(alias = "i")]
-    Install(Install),
-    Resolve(Resolve),
-    #[command(alias = "rm")]
-    Remove(Remove),
-    Update(Update),
-    Outdated(Outdated),
-    Upgrade(Upgrade),
-    Downgrade(Downgrade),
-    Search(Search),
-    #[command(subcommand)]
-    Repo(Repo),
+    // #[command(alias = "i")]
+    // Install(Install),
+    // Resolve(Resolve),
+    // #[command(alias = "rm")]
+    // Remove(Remove),
+    // Update(Update),
+    // Outdated(Outdated),
+    // Upgrade(Upgrade),
+    // Downgrade(Downgrade),
+    // Search(Search),
+    // #[command(subcommand)]
+    // Repo(Repo),
     #[command(subcommand)]
     Info(info::Info),
-    #[command(subcommand)]
-    Migrate(migrate::Migrate),
-    #[cfg(feature = "experimental-vcc")]
-    #[command(subcommand)]
-    Vcc(vcc::Vcc),
-    #[cfg(not(feature = "experimental-vcc"))]
-    #[command(hide = true)]
-    Vcc(FakeVcc),
-
-    Completion(Completion),
+    // #[command(subcommand)]
+    // Migrate(migrate::Migrate),
+    // #[cfg(feature = "experimental-vcc")]
+    // #[command(subcommand)]
+    // Vcc(vcc::Vcc),
+    // #[cfg(not(feature = "experimental-vcc"))]
+    // #[command(hide = true)]
+    // Vcc(FakeVcc),
+    //
+    // Completion(Completion),
 }
 
 multi_command!(Command is
-    Install,
-    Resolve,
-    Remove,
-    Update,
-    Outdated,
-    Upgrade,
-    Downgrade,
-    Search,
-    Repo,
+    // Install,
+    // Resolve,
+    // Remove,
+    // Update,
+    // Outdated,
+    // Upgrade,
+    // Downgrade,
+    // Search,
+    // Repo,
     Info,
-    Migrate,
-    Vcc,
-    Completion,
+    // Migrate,
+    // Vcc,
+    // Completion,
 );
 
 /// Adds package to unity project
